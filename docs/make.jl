@@ -43,7 +43,7 @@ makedocs(;
     pages=pages,
 )
 
-# deploydocs(;
-#     repo="github.com/LouisBouvier/InventoryRoutingLNS.jl",
-#     devbranch="main",
-# )
+deploydocs(;
+    repo="github.com/LouisBouvier/InventoryRoutingLNS.jl",
+    devbranch="main",
+)

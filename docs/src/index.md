@@ -2,9 +2,9 @@
 CurrentModule = InventoryRoutingLNS
 ```
 
-# InventoryRoutingLNS
+# InventoryRoutingLNS.jl
 
-Documentation for [InventoryRoutingLNS](https://github.com/LouisBouvier/InventoryRoutingLNS.jl).
+Documentation for [InventoryRoutingLNS.jl](https://github.com/LouisBouvier/InventoryRoutingLNS.jl).
 
 ## Get started
 
