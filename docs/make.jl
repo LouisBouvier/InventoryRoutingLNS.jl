@@ -1,7 +1,33 @@
 using InventoryRoutingLNS
 using Documenter
+using Literate
+
 
 DocMeta.setdocmeta!(InventoryRoutingLNS, :DocTestSetup, :(using InventoryRoutingLNS); recursive=true)
+
+function markdown_title(path)
+    title = "?"
+    open(path, "r") do file
+        for line in eachline(file)
+            if startswith(line, '#')
+                title = strip(line, [' ', '#'])
+                break
+            end
+        end
+    end
+    return String(title)
+end
+
+pages = [
+    "Home" => "index.md",
+    "Inventory Routing Problem" => "IRP.md",
+    "Input-Output" => "input_output.md",
+    "Evaluation" => "evaluation.md",
+    "Flows and Graphs" => "flows.md",
+    "Utils" => "utils.md",
+    "Large Neighborhood Search" => "localsearch.md",
+    "Heuristics" => "heuristics.md",
+]
 
 makedocs(;
     modules=[InventoryRoutingLNS],
@@ -14,12 +40,10 @@ makedocs(;
         edit_link="main",
         assets=String[],
     ),
-    pages=[
-        "Home" => "index.md",
-    ],
+    pages=pages,
 )
 
-deploydocs(;
-    repo="github.com/LouisBouvier/InventoryRoutingLNS.jl",
-    devbranch="main",
-)
+# deploydocs(;
+#     repo="github.com/LouisBouvier/InventoryRoutingLNS.jl",
+#     devbranch="main",
+# )
