@@ -3,15 +3,6 @@ uuid = "9bd57249-2adc-458a-9ed8-13930b6156fb"
 authors = ["Louis Bouvier", "Guillaume Dalle", "Axel Parmentier", "Thibaut Vidal"]
 version = "0.1.0"
 
-[compat]
-julia = "1.7"
-
-[extras]
-Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
-
-[targets]
-test = ["Test"]
-
 [deps]
 CSV = "336ed68f-0bac-5ca0-87d4-7b16caf5d00b"
 Clp = "e2554f3b-3117-50c0-817c-e040a3ddf72d"
@@ -29,3 +20,12 @@ ProgressMeter = "92933f4c-e287-5a05-a399-4b506db050ca"
 Random = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
 SparseArrays = "2f01184e-e22b-5df5-ae63-d93ebab69eaf"
 
+[compat]
+JuMP = "1"
+julia = "1.7"
+
+[extras]
+Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
+
+[targets]
+test = ["Test"]
