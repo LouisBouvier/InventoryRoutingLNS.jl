@@ -266,7 +266,7 @@ function LNS!(
     oldcost = compute_cost(instance)
     # we keep the best solution during the LNS
     best_cost = oldcost
-    best_solution = mycopy(instance.solution)
+    best_solution = deepcopy(instance.solution)
     # customer reinsertion steps
     iterative_ruin_recreate_customer!(
         instance,
@@ -278,7 +278,7 @@ function LNS!(
     cost_altered = compute_cost(instance)
     if cost_altered < best_cost
         best_cost = cost_altered
-        best_solution = mycopy(instance.solution)
+        best_solution = deepcopy(instance.solution)
     end
     # commodity reinsertion steps
     iterative_ruin_recreate_commodity!(
@@ -290,7 +290,7 @@ function LNS!(
     cost_altered = compute_cost(instance)
     if cost_altered < best_cost
         best_cost = cost_altered
-        best_solution = mycopy(instance.solution)
+        best_solution = deepcopy(instance.solution)
     end
     # multi-depot local search 
     stats["duration_multi_depot_LS"] += @elapsed multi_depot_local_search!(
@@ -302,14 +302,14 @@ function LNS!(
     )
     if cost_altered < best_cost
         best_cost = cost_altered
-        best_solution = mycopy(instance.solution)
+        best_solution = deepcopy(instance.solution)
     end
     # refill routes
     refill_iterative_depot!(instance, verbose = verbose, stats = stats)
     cost_altered = compute_cost(instance)
     if cost_altered < best_cost
         best_cost = cost_altered
-        best_solution = mycopy(instance.solution)
+        best_solution = deepcopy(instance.solution)
     end
     newcost = compute_cost(instance)
     stats["nb_iter_LNS"] += 1
@@ -326,7 +326,7 @@ function LNS!(
         cost_altered = compute_cost(instance)
         if cost_altered < best_cost
             best_cost = cost_altered
-            best_solution = mycopy(instance.solution)
+            best_solution = deepcopy(instance.solution)
         end
         if compute_total_time(stats) > stats["time_limit"]
             break 
@@ -341,7 +341,7 @@ function LNS!(
         cost_altered = compute_cost(instance)
         if cost_altered < best_cost
             best_cost = cost_altered
-            best_solution = mycopy(instance.solution)
+            best_solution = deepcopy(instance.solution)
         end
         if compute_total_time(stats) > stats["time_limit"]
             break 
@@ -357,7 +357,7 @@ function LNS!(
         cost_altered = compute_cost(instance)
         if cost_altered < best_cost
             best_cost = cost_altered
-            best_solution = mycopy(instance.solution)
+            best_solution = deepcopy(instance.solution)
         end
         if compute_total_time(stats) > stats["time_limit"]
             break 
@@ -367,7 +367,7 @@ function LNS!(
         cost_altered = compute_cost(instance)
         if cost_altered < best_cost
             best_cost = cost_altered
-            best_solution = mycopy(instance.solution)
+            best_solution = deepcopy(instance.solution)
         end
         if compute_total_time(stats) > stats["time_limit"]
             stats["nb_iter_LNS"] += 1

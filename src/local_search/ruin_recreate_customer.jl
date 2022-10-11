@@ -489,7 +489,7 @@ A warmstart is performed to gain speed, initialized at the last solution.
 """
 function one_step_ruin_recreate_customer!(instance::Instance, customer_index::Int)
     ## Save the former solution and cost 
-    intial_solution = mycopy(instance.solution)
+    intial_solution = deepcopy(instance.solution)
     initial_cost = compute_cost(instance)
 
     ## Get information about the commodities
