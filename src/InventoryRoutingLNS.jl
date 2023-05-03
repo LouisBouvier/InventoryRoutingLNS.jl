@@ -11,6 +11,7 @@ using JSON
 using JuMP
 using Graphs
 using LinearAlgebra
+using Plots
 using ProgressMeter
 using Random
 using SparseArrays
@@ -59,9 +60,12 @@ include("heuristics/fill_fixed_routes.jl")
 include("heuristics/benchmark_heuristic.jl")
 include("utils/combinatorics.jl")
 include("utils/manage_time.jl")
+include("analysis/analyze_solutions.jl")
+include("analysis/analyze_instances.jl")
 
 ## Matheuristic
-export read_instance_CSV, rescale_release_demand!
+export read_instance_CSV, read_solution
 export paper_matheuristic!, route_based_matheuristic!
 export modified_capa_initialization_plus_ls!, multi_depot_local_search!
+export analyze_solution, analyze_instance
 end

@@ -92,7 +92,7 @@ function fill_fixed_routes_MILP(instance::Instance;
 
     # Optimize the model 
     set_optimizer_attribute(model, "MIPGap", 0.05)
-    set_optimizer_attribute(model, "TimeLimit", 60)
+    set_optimizer_attribute(model, "TimeLimit", 120)
     set_optimizer_attribute(model, "Method", 1)
     set_optimizer_attribute(model, "OutputFlag", 0)
     optimize!(model)

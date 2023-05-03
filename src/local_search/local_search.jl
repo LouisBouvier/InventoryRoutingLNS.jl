@@ -300,6 +300,7 @@ function LNS!(
         stats = stats,
         in_LNS = true,
     )
+    cost_altered = compute_cost(instance)
     if cost_altered < best_cost
         best_cost = cost_altered
         best_solution = deepcopy(instance.solution)
