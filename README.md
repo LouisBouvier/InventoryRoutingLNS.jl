@@ -46,3 +46,4 @@ Note that in the paper we call LNS the combination of `initialization_plus_ls!` 
 
 1. Download the dataset of instances available [here](http://cermics.enpc.fr/~parmenta/IRP/instances.zip), unzip it and put it in the `data/` folder of this repository.
 2. Run the `main.jl` as is to solve the 71 instances used for the numerical experiments of [Solving a Continent-Scale Inventory Routing Problem at Renault](https://arxiv.org/abs/2209.00412).
+3. The solutions of the computational experiments of the paper are directly available [here](http://cermics.enpc.fr/~parmenta/IRP/solutions.zip). See our code documentation to import them.
