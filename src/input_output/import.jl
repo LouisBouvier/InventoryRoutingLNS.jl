@@ -514,7 +514,7 @@ function read_instance_CSV(path_to_folder::String)::Instance
     )
 end
 
-function read_instance_ZIP(instance_id::String)
+function read_instance_ZIP()
     instances_path = joinpath(datadep"IRP-instances", "instances.zip")
     instances_zip = ZipFile.Reader(instances_path)
     try
