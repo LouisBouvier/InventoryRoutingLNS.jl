@@ -21,11 +21,13 @@ struct FGN
     c::Int
     s::Int
     str::String
-    FGN(; t = 0, t_h = 0, d = 0, c = 0, s = 0, str = "?") = new(t, t_h, d, c, s, str)
+    FGN(; t=0, t_h=0, d=0, c=0, s=0, str="?") = new(t, t_h, d, c, s, str)
 end
 
 function Base.hash(fgn::FGN, h::UInt)
-    return hash(fgn.t, hash(fgn.t_h, hash(fgn.d, hash(fgn.c, hash(fgn.s, hash(fgn.str, h))))))
+    return hash(
+        fgn.t, hash(fgn.t_h, hash(fgn.d, hash(fgn.c, hash(fgn.s, hash(fgn.str, h)))))
+    )
 end
 
 function Base.isequal(fgn1::FGN, fgn2::FGN)
@@ -151,24 +153,24 @@ end
 function Graphs.add_edge!(g::FlowGraph{L}, label1::L, label2::L) where {L}
     s = get_vertexindex(g, label1)
     d = get_vertexindex(g, label2)
-    add_edge!(g, s, d)
+    return add_edge!(g, s, d)
 end
 
 function set_capa_min!(g::FlowGraph, edgeindex::Int, l::Real)
-    g.capa_min[edgeindex] = l
+    return g.capa_min[edgeindex] = l
 end
 
 function set_capa_max!(g::FlowGraph, edgeindex::Int, u::Real)
-    g.capa_max[edgeindex] = u
+    return g.capa_max[edgeindex] = u
 end
 
 function set_value!(g::FlowGraph, edgeindex::Int, v::Real)
     set_capa_min!(g, edgeindex, v)
-    set_capa_max!(g, edgeindex, v)
+    return set_capa_max!(g, edgeindex, v)
 end
 
 function set_cost!(g::FlowGraph, edgeindex::Int, c::Real)
-    g.cost[edgeindex] = c
+    return g.cost[edgeindex] = c
 end
 
 function my_incidence_matrix(g::FlowGraph)
@@ -189,11 +191,11 @@ The flow constraints are the following:
 """
 function add_flow_constraints!(model::Model, flowvar, g::FlowGraph)
     # Parse edge features
-    for k = 1:ne(g)
+    for k in 1:ne(g)
         capamin, capamax = g.capa_min[k], g.capa_max[k]
         @assert capamin <= capamax
         if capamin == capamax
-            fix(flowvar[k], capamin, force = true)
+            fix(flowvar[k], capamin; force=true)
         else
             if capamin > 0.0
                 set_lower_bound(flowvar[k], capamin)
@@ -213,7 +215,7 @@ end
 Add flow cost of variable `flowvar` to JuMP expression `expr`, based on flow graph `g`.
 """
 function add_flow_cost!(expr, flowvar, g::FlowGraph)
-    for k = 1:ne(g)
+    for k in 1:ne(g)
         cost = g.cost[k]
         if cost > 0.0
             add_to_expression!(expr, cost, flowvar[k])

@@ -12,7 +12,9 @@ We update the `instance` solution depending on `delete_empty_routes`.
 If `true`, the routes with empty vehicles are deleted from the solution.
 Else, they are kept.
 """
-function remove_commodity!(instance::Instance; commodity_index::Int, delete_empty_routes::Bool = true)
+function remove_commodity!(
+    instance::Instance; commodity_index::Int, delete_empty_routes::Bool=true
+)
     M, D, C, T = instance.M, instance.D, instance.C, instance.T
     routes = list_routes(instance.solution)
     former_quantities_former_routes = Dict()
@@ -31,7 +33,7 @@ function remove_commodity!(instance::Instance; commodity_index::Int, delete_empt
             update_instance_some_routes!(instance, [route], "delete")
             update_instance_some_routes!(instance, [route_copy], "add")
             quantities_in_former_route = []
-            for stop in route.stops 
+            for stop in route.stops
                 append!(quantities_in_former_route, stop.Q[commodity_index])
             end
             former_quantities_former_routes[route_copy.id] = quantities_in_former_route
@@ -74,24 +76,23 @@ function commodity_insertion_MILP(
     force_values::Bool,
     values_vehicles_flow::Array,
     values_commodities_flows::Array,
-    use_warm_start::Bool
+    use_warm_start::Bool,
 )
     ## Get dimensions
     D, C, T, M = instance.D, instance.C, instance.T, instance.M
     vehicle_capacity = instance.vehicle_capacity
-    l = [instance.commodities[m].l for m = 1:M]
+    l = [instance.commodities[m].l for m in 1:M]
     concerned_depots = select_relevant_depots(instance, commodity_index)
-    list_depots = [d for d = 1:D if concerned_depots[d] == 1]
+    list_depots = [d for d in 1:D if concerned_depots[d] == 1]
     concerned_customers = select_relevant_customers(instance, commodity_index)
-    list_customers = [c for c = 1:C if concerned_customers[c] == 1]
-
+    list_customers = [c for c in 1:C if concerned_customers[c] == 1]
 
     routes = list_routes(instance.solution)
 
     model = Model(Gurobi.Optimizer)
 
     # Vehicle flow: the new routes are direct for the moment
-    fg_vehicles = expanded_vehicle_flow_graph(instance; S_max = 1, maxdist = maxdist)
+    fg_vehicles = expanded_vehicle_flow_graph(instance; S_max=1, maxdist=maxdist)
 
     # Variable
     @variable(model, x[1:ne(fg_vehicles)] >= 0, integer = integer)
@@ -102,15 +103,15 @@ function commodity_insertion_MILP(
 
     # Commodity flow
     fg_commodity = commodity_flow_graph(
-        instance,
-        commodity_index = commodity_index,
-        S_max = 1,
-        maxdist = Inf,
-        relaxed_trip_cost = false,
-        average_content_sizes = nothing,
-        force_routes_values = force_values,
-        sent_quantities_to_force = former_quantities_new_routes,
-        sparsify = true,
+        instance;
+        commodity_index=commodity_index,
+        S_max=1,
+        maxdist=Inf,
+        relaxed_trip_cost=false,
+        average_content_sizes=nothing,
+        force_routes_values=force_values,
+        sent_quantities_to_force=former_quantities_new_routes,
+        sparsify=true,
     )
 
     old_possible_routes_indices = Vector{Int}()
@@ -135,35 +136,42 @@ function commodity_insertion_MILP(
         for (s, stop) in enumerate(route.stops)
             arrival_date = stop.t
             c = stop.c
-            add_vertex!(fg_commodity, FGN(t = arrival_date, c = c, s = s, str = "noon_route_$r"))
+            add_vertex!(fg_commodity, FGN(; t=arrival_date, c=c, s=s, str="noon_route_$r"))
         end
 
         # add arcs
         # d => c
-        n1 = FGN(t = t, d = d, str = "morning")
-        n2 = FGN(t = route.stops[1].t, c = route.stops[1].c, s = 1, str = "noon_route_$r")
+        n1 = FGN(; t=t, d=d, str="morning")
+        n2 = FGN(; t=route.stops[1].t, c=route.stops[1].c, s=1, str="noon_route_$r")
         add_edge!(fg_commodity, n1, n2)
         set_capa_max!(
-            fg_commodity,
-            ne(fg_commodity),
-            floor(remaining_space / l[commodity_index]),
+            fg_commodity, ne(fg_commodity), floor(remaining_space / l[commodity_index])
         )
 
         # c1 => c2
-        for s = 1:(length(route.stops)-1)
-            n1 = FGN(t = route.stops[s].t, c = route.stops[s].c, s = s, str = "noon_route_$r")
-            n2 = FGN(t = route.stops[s+1].t, c = route.stops[s+1].c, s = (s + 1), str = "noon_route_$r")
+        for s in 1:(length(route.stops) - 1)
+            n1 = FGN(; t=route.stops[s].t, c=route.stops[s].c, s=s, str="noon_route_$r")
+            n2 = FGN(;
+                t=route.stops[s + 1].t,
+                c=route.stops[s + 1].c,
+                s=(s + 1),
+                str="noon_route_$r",
+            )
             add_edge!(fg_commodity, n1, n2)
         end
 
         # c_noon => c_evening
-        for s = 1:length(route.stops)
+        for s in 1:length(route.stops)
             if concerned_customers[route.stops[s].c] == 1
-                n1 = FGN(t = route.stops[s].t, c = route.stops[s].c, s = s, str = "noon_route_$r")
-                n2 = FGN(t = route.stops[s].t, c = route.stops[s].c, str = "evening")
+                n1 = FGN(; t=route.stops[s].t, c=route.stops[s].c, s=s, str="noon_route_$r")
+                n2 = FGN(; t=route.stops[s].t, c=route.stops[s].c, str="evening")
                 add_edge!(fg_commodity, n1, n2)
-                if force_values 
-                    set_value!(fg_commodity, ne(fg_commodity), former_quantities_former_routes[route.id][s])
+                if force_values
+                    set_value!(
+                        fg_commodity,
+                        ne(fg_commodity),
+                        former_quantities_former_routes[route.id][s],
+                    )
                 end
             end
         end
@@ -179,17 +187,20 @@ function commodity_insertion_MILP(
     # Coupling constraints vehicles - commodity
 
     # Trip d => c
-    @showprogress "Link trips d=>c " for d in list_depots, c in list_customers, t = 1:T
-        n1 = FGN(t = t, d = d, str = "morning")
-        arrival_date = t + floor(instance.transport_durations[d, D+c] / instance.nb_transport_hours_per_day)
-        if arrival_date <=T
-            n2 = FGN(t = arrival_date, c = c, s = 1, str = "noon")
+    @showprogress "Link trips d=>c " for d in list_depots, c in list_customers, t in 1:T
+        n1 = FGN(; t=t, d=d, str="morning")
+        arrival_date =
+            t + floor(
+                instance.transport_durations[d, D + c] / instance.nb_transport_hours_per_day
+            )
+        if arrival_date <= T
+            n2 = FGN(; t=arrival_date, c=c, s=1, str="noon")
             edge12commodity = get_edgeindex(fg_commodity, n1, n2)
             edge12vehicles = get_edgeindex(fg_vehicles, n1, n2)
             @constraint(
                 model,
                 model[:z][edge12commodity] <=
-                model[:x][edge12vehicles] * floor(vehicle_capacity / l[commodity_index])
+                    model[:x][edge12vehicles] * floor(vehicle_capacity / l[commodity_index])
             )
         end
     end
@@ -201,7 +212,7 @@ function commodity_insertion_MILP(
     @objective(model, Min, obj)
 
     set_optimizer_attribute(model, "OutputFlag", 0) # TODO
-    set_optimizer_attribute(model, "TimeLimit", 20)    
+    set_optimizer_attribute(model, "TimeLimit", 20)
     set_optimizer_attribute(model, "MIPGap", 0.005)
     set_optimizer_attribute(model, "Method", 1)
     optimize!(model)
@@ -241,8 +252,8 @@ function fill_former_routes_commodity_insertion!(
             if concerned_customers[stop.c] != 1
                 continue
             end
-            n1 = FGN(t = stop.t, c = stop.c, s = s, str = "noon_route_$ind_r")
-            n2 = FGN(t = stop.t, c = stop.c, str = "evening")
+            n1 = FGN(; t=stop.t, c=stop.c, s=s, str="noon_route_$ind_r")
+            n2 = FGN(; t=stop.t, c=stop.c, str="evening")
             edge12commodity = get_edgeindex(fg_commodity, n1, n2)
             if flow_commodity[edge12commodity] > 0
                 stop.Q[commodity_index] = flow_commodity[edge12commodity]
@@ -251,13 +262,13 @@ function fill_former_routes_commodity_insertion!(
                     print(concerned_customers[c])
 
                     println("Fill wrong customer in a former route!!")
-                    feasibility(instance.customers[c], verbose = true)
+                    feasibility(instance.customers[c]; verbose=true)
                 end
             end
         end
     end
     update_instance_from_solution!(instance, commodity_index)
-    println("Quantity sent by former routes:", quantity_former_routes)
+    return println("Quantity sent by former routes:", quantity_former_routes)
 end
 
 """
@@ -281,7 +292,7 @@ function fill_new_routes_commodity_insertion!(
 )
     M = instance.M
     vehicle_capacity = instance.vehicle_capacity
-    l = [instance.commodities[m].l for m = 1:M]
+    l = [instance.commodities[m].l for m in 1:M]
     sent_by_new_routes = 0
     #  Deduce sent quantities
     for (k, edge) in enumerate(edges(fg_commodity))
@@ -295,20 +306,21 @@ function fill_new_routes_commodity_insertion!(
             sent_by_new_routes += quantity_dc
             while quantity_dc > 0
                 Q = zeros(Int, M)
-                Q[commodity_index] =
-                    min(floor(vehicle_capacity / l[commodity_index]), quantity_dc)
+                Q[commodity_index] = min(
+                    floor(vehicle_capacity / l[commodity_index]), quantity_dc
+                )
                 quantity_dc -= Q[commodity_index]
-                stop = RouteStop(c = c, t = arrival_date, Q = Q)
-                route = Route(t = t, d = d, stops = [stop])
+                stop = RouteStop(; c=c, t=arrival_date, Q=Q)
+                route = Route(; t=t, d=d, stops=[stop])
                 update_instance_some_routes!(instance, [route], "add")
                 if !feasibility(instance.customers[c])
                     println("Fill wrong customer in a new route !!")
-                    feasibility(instance.customers[c], verbose = true)
+                    feasibility(instance.customers[c]; verbose=true)
                 end
             end
         end
     end
-    println("Quantity sent by new routes:", sent_by_new_routes)
+    return println("Quantity sent by new routes:", sent_by_new_routes)
 end
 
 """
@@ -331,7 +343,7 @@ function one_step_ruin_recreate_commodity!(
     commodity_index::Int,
     integer::Bool,
     maxdist::Real,
-    delete_empty_routes::Bool = true,
+    delete_empty_routes::Bool=true,
 )
 
     ## Save the former solution and cost 
@@ -340,27 +352,26 @@ function one_step_ruin_recreate_commodity!(
 
     ## Remove the commodity from the solution
     println("Remove commodity: ", commodity_index)
-    former_quantities_former_routes, former_quantities_new_routes = remove_commodity!(instance, 
-                                                                                        commodity_index = commodity_index,
-                                                                                        delete_empty_routes = delete_empty_routes)
+    former_quantities_former_routes, former_quantities_new_routes = remove_commodity!(
+        instance; commodity_index=commodity_index, delete_empty_routes=delete_empty_routes
+    )
 
     ## Initialize with the former configuration
     println("Solve the initialization flow problem")
 
-    _, fg_commodity, model, old_possible_routes_indices =
-        commodity_insertion_MILP(
-            instance, 
-            commodity_index = commodity_index, 
-            integer = integer, 
-            maxdist = maxdist,
-            former_quantities_former_routes = former_quantities_former_routes,
-            former_quantities_new_routes = former_quantities_new_routes,
-            force_values = true,
-            values_vehicles_flow = zeros(1),
-            values_commodities_flows = zeros(1),
-            use_warm_start = false
-            )
-            
+    _, fg_commodity, model, old_possible_routes_indices = commodity_insertion_MILP(
+        instance;
+        commodity_index=commodity_index,
+        integer=integer,
+        maxdist=maxdist,
+        former_quantities_former_routes=former_quantities_former_routes,
+        former_quantities_new_routes=former_quantities_new_routes,
+        force_values=true,
+        values_vehicles_flow=zeros(1),
+        values_commodities_flows=zeros(1),
+        use_warm_start=false,
+    )
+
     if !has_values(model)
         instance.solution = intial_solution
         update_instance_from_solution!(instance)
@@ -370,20 +381,19 @@ function one_step_ruin_recreate_commodity!(
     flow_vehicle = trunc.(Int, value.(model[:x]))
 
     ## Solve the insertion MILP with warm start
-    _, fg_commodity, model, old_possible_routes_indices =
-    commodity_insertion_MILP(
-        instance, 
-        commodity_index = commodity_index, 
-        integer = integer, 
-        maxdist = maxdist,
-        former_quantities_former_routes = former_quantities_former_routes,
-        former_quantities_new_routes = former_quantities_new_routes,
-        force_values = false,
-        values_vehicles_flow = flow_vehicle,
-        values_commodities_flows = flow_commodity,
-        use_warm_start = true
-        )
-    
+    _, fg_commodity, model, old_possible_routes_indices = commodity_insertion_MILP(
+        instance;
+        commodity_index=commodity_index,
+        integer=integer,
+        maxdist=maxdist,
+        former_quantities_former_routes=former_quantities_former_routes,
+        former_quantities_new_routes=former_quantities_new_routes,
+        force_values=false,
+        values_vehicles_flow=flow_vehicle,
+        values_commodities_flows=flow_commodity,
+        use_warm_start=true,
+    )
+
     if !has_values(model)
         instance.solution = intial_solution
         update_instance_from_solution!(instance)
@@ -394,27 +404,20 @@ function one_step_ruin_recreate_commodity!(
 
     ## Fill former routes
     fill_former_routes_commodity_insertion!(
-        instance,
-        old_possible_routes_indices,
-        flow_commodity,
-        fg_commodity,
-        commodity_index,
+        instance, old_possible_routes_indices, flow_commodity, fg_commodity, commodity_index
     )
 
     ## Fill new direct routes
     fill_new_routes_commodity_insertion!(
-        instance,
-        fg_commodity,
-        flow_commodity,
-        commodity_index,
+        instance, fg_commodity, flow_commodity, commodity_index
     )
 
     final_cost = compute_cost(instance)
-    if (final_cost - initial_cost)/initial_cost > 0.05
+    if (final_cost - initial_cost) / initial_cost > 0.05
         println("New cost: $final_cost, reset to initial solution")
         instance.solution = intial_solution
         update_instance_from_solution!(instance)
     end
-    println("Cost after ruin and recreate: ", compute_cost(instance))    
+    println("Cost after ruin and recreate: ", compute_cost(instance))
     return true
 end

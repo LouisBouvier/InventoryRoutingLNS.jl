@@ -19,12 +19,17 @@ function insert_single_depot!(
     route2::Route,
     i::Int,
     instance::Instance;
-    stats::Dict = nothing,
-    in_LNS::Bool = true,
+    stats::Dict=nothing,
+    in_LNS::Bool=true,
 )
     # Update the routes 
-    route2_future_stops = unique(vcat([stop.c for stop in route2.stops],[route1.stops[i].c]))
-    if (content_size(route2, instance) + content_size(route1.stops[i], instance) > instance.vehicle_capacity) || length(route2_future_stops) > instance.S_max
+    route2_future_stops = unique(
+        vcat([stop.c for stop in route2.stops], [route1.stops[i].c])
+    )
+    if (
+        content_size(route2, instance) + content_size(route1.stops[i], instance) >
+        instance.vehicle_capacity
+    ) || length(route2_future_stops) > instance.S_max
         if in_LNS
             stats["insert_single_depot_aborted"] += 1
         end
@@ -43,21 +48,42 @@ function insert_single_depot!(
         compress!(route2_mod, instance)
         # initialize old cost 
         oldcost = 1
-        if floor(compute_route_duration(route2_mod, instance) / instance.nb_transport_hours_per_day) + route2_mod.t <= instance.T
+        if floor(
+            compute_route_duration(route2_mod, instance) /
+            instance.nb_transport_hours_per_day,
+        ) + route2_mod.t <= instance.T
             # Parameters
             M, T = instance.M, instance.T
             # Localize and compute old cost
             cs = unique([stop.c for stop in route1.stops[i:end]]) #unique_stops([route1, route2])
-            departure_date = route1.t 
-            ts = collect(departure_date:T) 
-            ms = [m for m = 1:M if (uses_commodity(route1, m) || uses_commodity(route2, m))]
-            oldcost = compute_cost(instance, ds = Vector{Int}(), cs = cs, ms = ms, ts = ts, solution = SimpleSolution([route1, route2]))
+            departure_date = route1.t
+            ts = collect(departure_date:T)
+            ms = [
+                m for m in 1:M if (uses_commodity(route1, m) || uses_commodity(route2, m))
+            ]
+            oldcost = compute_cost(
+                instance;
+                ds=Vector{Int}(),
+                cs=cs,
+                ms=ms,
+                ts=ts,
+                solution=SimpleSolution([route1, route2]),
+            )
             # Compute new cost
             update_instance_some_routes!(instance, [route1, route2], "delete", false)
             update_instance_some_routes!(instance, [route1_mod, route2_mod], "add", false)
-            newcost = compute_cost(instance, ds = Vector{Int}(), cs = cs, ms = ms, ts = ts, solution = SimpleSolution([route1_mod, route2_mod]))
-            update_instance_some_routes!(instance, [route1_mod, route2_mod], "delete", false)
-            update_instance_some_routes!(instance, [route1, route2], "add", false)    
+            newcost = compute_cost(
+                instance;
+                ds=Vector{Int}(),
+                cs=cs,
+                ms=ms,
+                ts=ts,
+                solution=SimpleSolution([route1_mod, route2_mod]),
+            )
+            update_instance_some_routes!(
+                instance, [route1_mod, route2_mod], "delete", false
+            )
+            update_instance_some_routes!(instance, [route1, route2], "add", false)
         else
             newcost = Inf
         end
@@ -82,21 +108,40 @@ function insert_single_depot!(
         compress!(route2_mod, instance)
         # initialize old cost 
         oldcost = 1
-        if floor(compute_route_duration(route2_mod, instance) / instance.nb_transport_hours_per_day) + route2_mod.t <= instance.T
+        if floor(
+            compute_route_duration(route2_mod, instance) /
+            instance.nb_transport_hours_per_day,
+        ) + route2_mod.t <= instance.T
             # Parameters
             M, T = instance.M, instance.T
             # Localize and compute old cost
             cs = unique([stop.c for stop in route1.stops[i:end]]) #unique_stops([route1, route2])
-            departure_date = route1.t 
-            ts = collect(departure_date:T) 
-            ms = [m for m = 1:M if (uses_commodity(route1, m) || uses_commodity(route2, m))]
-            oldcost = compute_cost(instance, ds = Vector{Int}(), cs = cs, ms = ms, ts = ts, solution = SimpleSolution([route1, route2]))
+            departure_date = route1.t
+            ts = collect(departure_date:T)
+            ms = [
+                m for m in 1:M if (uses_commodity(route1, m) || uses_commodity(route2, m))
+            ]
+            oldcost = compute_cost(
+                instance;
+                ds=Vector{Int}(),
+                cs=cs,
+                ms=ms,
+                ts=ts,
+                solution=SimpleSolution([route1, route2]),
+            )
             # Compute new cost
             update_instance_some_routes!(instance, [route1, route2], "delete", false)
             update_instance_some_routes!(instance, [route2_mod], "add", false)
-            newcost = compute_cost(instance, ds = Vector{Int}(), cs = cs, ms = ms, ts = ts, solution = SimpleSolution([route2_mod]))
+            newcost = compute_cost(
+                instance;
+                ds=Vector{Int}(),
+                cs=cs,
+                ms=ms,
+                ts=ts,
+                solution=SimpleSolution([route2_mod]),
+            )
             update_instance_some_routes!(instance, [route2_mod], "delete", false)
-            update_instance_some_routes!(instance, [route1, route2], "add", false)    
+            update_instance_some_routes!(instance, [route1, route2], "add", false)
         else
             newcost = Inf
         end
@@ -115,7 +160,7 @@ function insert_single_depot!(
             end
             return false
         end
-    end    
+    end
 end
 
 """
@@ -141,8 +186,8 @@ function swap_single_depot!(
     i::Int,
     j::Int,
     instance::Instance;
-    stats::Dict = nothing,
-    in_LNS::Bool = true,
+    stats::Dict=nothing,
+    in_LNS::Bool=true,
 )
     # Update the routes
     route1_mod, route2_mod = mycopy(route1), mycopy(route2)
@@ -150,7 +195,8 @@ function swap_single_depot!(
     stop2 = mycopy(route2_mod.stops[j])
     route1_mod.stops[i] = stop2
     route2_mod.stops[j] = stop1
-    if content_size(route1_mod, instance) > instance.vehicle_capacity || content_size(route2_mod, instance) > instance.vehicle_capacity
+    if content_size(route1_mod, instance) > instance.vehicle_capacity ||
+        content_size(route2_mod, instance) > instance.vehicle_capacity
         if in_LNS
             stats["swap_single_depot_aborted"] += 1
         end
@@ -164,22 +210,53 @@ function swap_single_depot!(
     compress!(route2_mod, instance)
     # initialize old cost 
     oldcost = 1
-    if (floor(compute_route_duration(route2_mod, instance) / instance.nb_transport_hours_per_day) + route2_mod.t <= instance.T) && 
-        (floor(compute_route_duration(route1_mod, instance) / instance.nb_transport_hours_per_day) + route1_mod.t <= instance.T) 
+    if (
+        floor(
+            compute_route_duration(route2_mod, instance) /
+            instance.nb_transport_hours_per_day,
+        ) + route2_mod.t <= instance.T
+    ) && (
+        floor(
+            compute_route_duration(route1_mod, instance) /
+            instance.nb_transport_hours_per_day,
+        ) + route1_mod.t <= instance.T
+    )
         # Parameters
         M, T = instance.M, instance.T
         # Localize and compute old cost
-        cs = unique(vcat([stop.c for stop in route1.stops[i:end]], [stop.c for stop in route2.stops[j:end]])) #unique_stops([route1, route2])
-        departure_date = route1.t 
-        ts = collect(departure_date:T) 
-        ms = [m for m = 1:M if (uses_commodity(route1_mod, m) || uses_commodity(route2_mod, m))]
-        oldcost = compute_cost(instance, ds = Vector{Int}(), cs = cs, ms = ms, ts = ts, solution = SimpleSolution([route1, route2]))
+        cs = unique(
+            vcat(
+                [stop.c for stop in route1.stops[i:end]],
+                [stop.c for stop in route2.stops[j:end]],
+            ),
+        ) #unique_stops([route1, route2])
+        departure_date = route1.t
+        ts = collect(departure_date:T)
+        ms = [
+            m for
+            m in 1:M if (uses_commodity(route1_mod, m) || uses_commodity(route2_mod, m))
+        ]
+        oldcost = compute_cost(
+            instance;
+            ds=Vector{Int}(),
+            cs=cs,
+            ms=ms,
+            ts=ts,
+            solution=SimpleSolution([route1, route2]),
+        )
         # Compute new cost
         update_instance_some_routes!(instance, [route1, route2], "delete", false)
         update_instance_some_routes!(instance, [route1_mod, route2_mod], "add", false)
-        newcost = compute_cost(instance, ds = Vector{Int}(), cs = cs, ms = ms, ts = ts, solution = SimpleSolution([route1_mod, route2_mod]))
+        newcost = compute_cost(
+            instance;
+            ds=Vector{Int}(),
+            cs=cs,
+            ms=ms,
+            ts=ts,
+            solution=SimpleSolution([route1_mod, route2_mod]),
+        )
         update_instance_some_routes!(instance, [route1_mod, route2_mod], "delete", false)
-        update_instance_some_routes!(instance, [route1, route2], "add", false)    
+        update_instance_some_routes!(instance, [route1, route2], "add", false)
     else
         newcost = Inf
     end
@@ -215,15 +292,11 @@ are included (either in the greedy initialization heuristic if `false`
 or the neighborhood of the LNS if `true`).
 """
 function iterative_insert_single_depot!(
-    instance::Instance,
-    t::Int,
-    d::Int;
-    stats::Dict = nothing,
-    in_LNS::Bool = true,
+    instance::Instance, t::Int, d::Int; stats::Dict=nothing, in_LNS::Bool=true
 )
     R = nb_routes(instance.solution, t, d)
     nb_it = floor(R^2 * 0.9) # subsample the number of pairs considered
-    for it = 1:nb_it
+    for it in 1:nb_it
         R = nb_routes(instance.solution, t, d)
         r1 = Random.rand(1:R)
         r2 = Random.rand(1:R)
@@ -232,9 +305,10 @@ function iterative_insert_single_depot!(
         end
         route1 = get_route(instance.solution, t, d, r1)
         route2 = get_route(instance.solution, t, d, r2)
-        for i = 1:length(route1.stops)
-            improvement_achieved =
-                    insert_single_depot!(route1, route2, i, instance, stats = stats, in_LNS = in_LNS)
+        for i in 1:length(route1.stops)
+            improvement_achieved = insert_single_depot!(
+                route1, route2, i, instance; stats=stats, in_LNS=in_LNS
+            )
             if improvement_achieved
                 break
             end
@@ -257,15 +331,11 @@ are included (either in the greedy initialization heuristic if `false`
 or the neighborhood of the LNS if `true`).
 """
 function iterative_swap_single_depot!(
-    instance::Instance,
-    t::Int,
-    d::Int;
-    stats::Dict = nothing,
-    in_LNS::Bool = true,
+    instance::Instance, t::Int, d::Int; stats::Dict=nothing, in_LNS::Bool=true
 )
     R = nb_routes(instance.solution, t, d)
     nb_it = floor(R^2 * 0.9) # subsample the number of pairs considered
-    for it = 1:nb_it
+    for it in 1:nb_it
         R = nb_routes(instance.solution, t, d)
         r1 = Random.rand(1:R)
         r2 = Random.rand(1:R)
@@ -274,16 +344,10 @@ function iterative_swap_single_depot!(
         end
         route1 = get_route(instance.solution, t, d, r1)
         route2 = get_route(instance.solution, t, d, r2)
-        for i = 1:length(route1.stops), j = 1:length(route2.stops)
+        for i in 1:length(route1.stops), j in 1:length(route2.stops)
             improvement_achieved = swap_single_depot!(
-                    route1,
-                    route2,
-                    i,
-                    j,
-                    instance,
-                    stats = stats,
-                    in_LNS = in_LNS,
-                )
+                route1, route2, i, j, instance; stats=stats, in_LNS=in_LNS
+            )
             if improvement_achieved
                 break
             end
@@ -303,18 +367,15 @@ Apply [`iterative_insert_single_depot!`](@ref) and [`iterative_swap_single_depot
 The `in_LNS` boolean is used to choose in which category the statistics 
 are included (either in the greedy initialization heuristic if `false` 
 or the neighborhood of the LNS if `true`).
-"""   
+"""
 function insert_swap_single_depot_routes!(
-    instance::Instance,
-    verbose::Bool = false;
-    stats::Dict = nothing,
-    in_LNS::Bool = true,
+    instance::Instance, verbose::Bool=false; stats::Dict=nothing, in_LNS::Bool=true
 )
-    @showprogress "Inserts and swaps between routes " for t = 1:instance.T,
-        d = 1:instance.D
+    @showprogress "Inserts and swaps between routes " for t in 1:(instance.T),
+        d in 1:(instance.D)
 
-        iterative_insert_single_depot!(instance, t, d, stats = stats, in_LNS = in_LNS)
-        iterative_swap_single_depot!(instance, t, d, stats = stats, in_LNS = in_LNS)
+        iterative_insert_single_depot!(instance, t, d; stats=stats, in_LNS=in_LNS)
+        iterative_swap_single_depot!(instance, t, d; stats=stats, in_LNS=in_LNS)
     end
-    verbose && println("Cost after inserts and swaps : ", compute_cost(instance))
+    return verbose && println("Cost after inserts and swaps : ", compute_cost(instance))
 end

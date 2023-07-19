@@ -7,11 +7,9 @@
 Apply FFD bin-packing to (`items`, `weights`) within a container of capacity `W`.
 """
 function first_fit_decreasing(
-    items::Vector{IT},
-    weights::Vector{<:Real},
-    W::Real,
+    items::Vector{IT}, weights::Vector{<:Real}, W::Real
 ) where {IT}
-    p = sortperm(weights, rev = true)
+    p = sortperm(weights; rev=true)
     items, weights = items[p], weights[p]
     bin_items = Vector{IT}[]
     bin_weights = Vector{Float64}[]
@@ -45,10 +43,10 @@ function bin_packing_milp(items::Vector{IT}, weights::Vector{<:Real}, W::Real) w
     @variable(model, x[1:n, 1:B], Bin)
     @variable(model, y[1:B], Bin)
 
-    for i = 1:n
+    for i in 1:n
         @constraint(model, sum(model[:x][i, :]) == 1)
     end
-    for b = 1:B
+    for b in 1:B
         @constraint(model, W * model[:y][b] >= sum(model[:x][:, b] .* weights))
     end
 
@@ -60,9 +58,9 @@ function bin_packing_milp(items::Vector{IT}, weights::Vector{<:Real}, W::Real) w
     xval = value.(model[:x])
 
     bin_items = Vector{Vector{IT}}(undef, B)
-    for b = 1:B
+    for b in 1:B
         bin_items[b] = IT[]
-        for i = 1:n
+        for i in 1:n
             if xval[i, b] == 1
                 push!(bin_items[b], items[i])
             end

@@ -23,7 +23,7 @@ Display `commodity` in the terminal.
 """
 function Base.show(io::IO, commodity::Commodity)
     str = "Commodity $(commodity.m) with length $(commodity.l)"
-    print(io, str)
+    return print(io, str)
 end
 
 """
@@ -32,5 +32,5 @@ end
 Copy `commodity`.
 """
 function Base.copy(commodity::Commodity)
-    return Commodity(m = commodity.m, l = commodity.l)
+    return Commodity(; m=commodity.m, l=commodity.l)
 end

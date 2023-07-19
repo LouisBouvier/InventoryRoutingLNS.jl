@@ -47,10 +47,10 @@ struct Depot <: Site
         maximum_inventory,
     )
         quantity_sent = zeros(Int, size(production))
-        inventory = initial_inventory .+ cumsum(production, dims = 2)
+        inventory = initial_inventory .+ cumsum(production; dims=2)
         commodity_used = [
             (initial_inventory[m] > 0 || any(production[m, :] .> 0)) for
-            m = 1:length(initial_inventory)
+            m in 1:length(initial_inventory)
         ]
         return new(
             d,
@@ -81,7 +81,7 @@ function Base.show(io::IO, depot::Depot)
     # str *= "\n   Daily production $(depot.production)"
     # str *= "\n   Daily maximum inventory $(depot.maximum_inventory)"
     # str *= "\n   Daily inventory $(depot.inventory)"
-    print(io, str)
+    return print(io, str)
 end
 
 """
@@ -90,14 +90,14 @@ end
 Copy `depot`.
 """
 function Base.copy(depot::Depot)
-    return Depot(
-        d = depot.d,
-        v = depot.v,
-        coordinates = depot.coordinates,
-        excess_inventory_cost = depot.excess_inventory_cost,
-        initial_inventory = depot.initial_inventory,
-        production = depot.production,
-        maximum_inventory = depot.maximum_inventory,
+    return Depot(;
+        d=depot.d,
+        v=depot.v,
+        coordinates=depot.coordinates,
+        excess_inventory_cost=depot.excess_inventory_cost,
+        initial_inventory=depot.initial_inventory,
+        production=depot.production,
+        maximum_inventory=depot.maximum_inventory,
     )
 end
 
@@ -109,13 +109,13 @@ Set `d` and `v` as indices for `depot` over depots and sites respectively.
 This can be used when dividing an instance into several smaller ones.
 """
 function renumber(depot::Depot; d::Int, v::Int)
-    return Depot(
-        d = d,
-        v = v,
-        coordinates = depot.coordinates,
-        excess_inventory_cost = depot.excess_inventory_cost,
-        initial_inventory = depot.initial_inventory,
-        production = depot.production,
-        maximum_inventory = depot.maximum_inventory,
+    return Depot(;
+        d=d,
+        v=v,
+        coordinates=depot.coordinates,
+        excess_inventory_cost=depot.excess_inventory_cost,
+        initial_inventory=depot.initial_inventory,
+        production=depot.production,
+        maximum_inventory=depot.maximum_inventory,
     )
 end

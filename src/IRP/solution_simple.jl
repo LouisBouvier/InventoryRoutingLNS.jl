@@ -24,16 +24,18 @@ list_routes(solution::SimpleSolution) = solution.routes
 
 Get the list of routes starting on day `t` in a simple `solution`.
 """
-list_routes(solution::SimpleSolution, t::Int) =
-    filter(route -> route.t == t, list_routes(solution))
+function list_routes(solution::SimpleSolution, t::Int)
+    return filter(route -> route.t == t, list_routes(solution))
+end
 
 """
     list_routes(solution::SimpleSolution, t::Int, d::Int)
 
 Get the list of routes starting on day `t` from depot `d` in a simple `solution`.
 """
-list_routes(solution::SimpleSolution, t::Int, d::Int) =
-    filter(route -> route.d == d, list_routes(solution, t))
+function list_routes(solution::SimpleSolution, t::Int, d::Int)
+    return filter(route -> route.d == d, list_routes(solution, t))
+end
 
 """
     nb_routes(solution::SimpleSolution)

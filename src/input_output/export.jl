@@ -18,17 +18,17 @@ function Base.string(depot::Depot)::String
     M, T = size(depot.production)
     str = "d $(depot.d - 1) v $(depot.v - 1) coor $(depot.coordinates[1]) $(depot.coordinates[2]) "
     str *= "cm "
-    for m = 1:M
+    for m in 1:M
         str *= "m $(m - 1) cr $(depot.excess_inventory_cost[m]) b $(depot.initial_inventory[m]) "
     end
     str *= "pro "
-    for t = 1:T
+    for t in 1:T
         str *= "t $(t - 1) "
-        for m = 1:M
+        for m in 1:M
             str *= "m $(m - 1) b $(depot.production[m, t]) r $(depot.maximum_inventory[m, t]) "
         end
     end
-    return str[1:end-1]
+    return str[1:(end - 1)]
 end
 
 """
@@ -40,17 +40,17 @@ function Base.string(customer::Customer)::String
     M, T = size(customer.demand)
     str = "c $(customer.c - 1) v $(customer.v - 1) coor $(customer.coordinates[1]) $(customer.coordinates[2]) "
     str *= "cm "
-    for m = 1:M
+    for m in 1:M
         str *= "m $(m - 1) cr $(customer.excess_inventory_cost[m]) cexc $(customer.shortage_cost[m]) b $(customer.initial_inventory[m]) "
     end
     str *= "dem "
-    for t = 1:T
+    for t in 1:T
         str *= "t $(t - 1) "
-        for m = 1:M
+        for m in 1:M
             str *= "m $(m - 1) b $(customer.demand[m, t]) r $(customer.maximum_inventory[m, t]) "
         end
     end
-    return str[1:end-1]
+    return str[1:(end - 1)]
 end
 
 """
@@ -74,10 +74,10 @@ Encode site-to-site `distances` in a `string`.
 function Base.string(distances::Distances)::String
     V = size(distances.dist, 1)
     str = ""
-    for u = 1:V, v = 1:V
+    for u in 1:V, v in 1:V
         str *= "a $(u - 1) $(v - 1) d $(distances.dist[u, v])\n"
     end
-    return str[1:end-1]
+    return str[1:(end - 1)]
 end
 
 """
@@ -88,7 +88,7 @@ Encode route `stop` in a `string`.
 function Base.string(stop::RouteStop)::String
     M = length(stop.Q)
     str = "c $(stop.c - 1) t $(stop.t - 1)"
-    for m = 1:M
+    for m in 1:M
         str *= " m $(m - 1) q $(stop.Q[m])"
     end
     return str
@@ -119,8 +119,7 @@ Encode `instance` in a text file at `path` location.
 function write_instance(instance::Instance, path::String)
     T, D, C, M = instance.T, instance.D, instance.C, instance.M
     vehicle_capacity, km_cost, vehicle_cost, stop_cost = instance.vehicle_capacity,
-    instance.km_cost,
-    instance.vehicle_cost,
+    instance.km_cost, instance.vehicle_cost,
     instance.stop_cost
     nb_transport_hours_per_day = instance.nb_transport_hours_per_day
     vehicle_speed = 50 ## to adapt the former format of instances 
@@ -135,7 +134,7 @@ function write_instance(instance::Instance, path::String)
     for customer in instance.customers
         str *= string(customer) * "\n"
     end
-    str *= string(Distances(dist = instance.dist)) * "\n"
+    str *= string(Distances(; dist=instance.dist)) * "\n"
     open(path, "w") do file
         write(file, str)
     end
@@ -210,7 +209,7 @@ Write the `stats` of the solution process in a `JSON` file for analysis.
 
 The stats are computed during optimization and defined in [`paper_matheuristic!`](@ref).
 """
-function write_stats(; stats::Dict = nothing, path_to_folder::String)
+function write_stats(; stats::Dict=nothing, path_to_folder::String)
     # pass data as a json string (how it shall be displayed in a file)
     stringdata = JSON.json(stats)
     # write the file with the stringdata variable information
@@ -235,8 +234,6 @@ function write_detailed_cost(; cost_dict, path_to_folder::String, name::String)
         write(f, stringdata)
     end
 end
-
-
 
 # function write_rescaled_instance(;rescaled_instance::Instance, instance_path::String)
 #     _, commodities_names = read_commodities_CSV(instance_path)

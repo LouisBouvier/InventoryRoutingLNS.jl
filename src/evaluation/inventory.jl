@@ -9,12 +9,12 @@ per customer and per depot on each day.
 function update_quantities_from_solution!(instance::Instance, m::Int)
     T = instance.T
     for depot in instance.depots
-        for t = 1:T
+        for t in 1:T
             depot.quantity_sent[m, t] = 0
         end
     end
     for customer in instance.customers
-        for t = 1:T
+        for t in 1:T
             customer.quantity_received[m, t] = 0
         end
     end
@@ -46,14 +46,14 @@ function update_inventory_from_quantities!(instance::Instance, m::Int)
     T = instance.T
 
     for depot in instance.depots
-        for t = 1:T
+        for t in 1:T
             inventory_prev = t == 1 ? depot.initial_inventory[m] : depot.inventory[m, t - 1]
             depot.inventory[m, t] =
                 inventory_prev + depot.production[m, t] - depot.quantity_sent[m, t]
         end
     end
     for customer in instance.customers
-        for t = 1:T
+        for t in 1:T
             inventory_prev =
                 t == 1 ? customer.initial_inventory[m] : customer.inventory[m, t - 1]
             customer.inventory[m, t] =
@@ -157,7 +157,6 @@ function coherence_solution_inventory(instance::Instance)
     return depots_coherent && customers_coherent
 end
 
-
 """
     update_quantities_some_routes!(instance::Instance, 
                                     routes::Vector{Route}, 
@@ -215,7 +214,7 @@ function update_inventories_some_routes!(instance::Instance, routes::Vector{Rout
     D, C, T, M = instance.D, instance.C, instance.T, instance.M
     ds = distinct(route.d for route in routes)
     cs = distinct(stop.c for route in routes for stop in route.stops)
-    ms = [m for m = 1:M if any(uses_commodity(route, m) for route in routes)]
+    ms = [m for m in 1:M if any(uses_commodity(route, m) for route in routes)]
     first_departure_date = minimum(route.t for route in routes)
     ts = first_departure_date:T
     for d in ds
@@ -224,7 +223,7 @@ function update_inventories_some_routes!(instance::Instance, routes::Vector{Rout
             if uses_commodity(depot, m)
                 for t in ts
                     previous_inventory =
-                        t == 1 ? depot.initial_inventory[m] : depot.inventory[m, t-1]
+                        t == 1 ? depot.initial_inventory[m] : depot.inventory[m, t - 1]
                     depot.inventory[m, t] = (
                         previous_inventory + depot.production[m, t] -
                         depot.quantity_sent[m, t]
@@ -238,8 +237,11 @@ function update_inventories_some_routes!(instance::Instance, routes::Vector{Rout
         for m in ms
             if uses_commodity(customer, m)
                 for t in ts
-                    previous_inventory =
-                        t == 1 ? customer.initial_inventory[m] : customer.inventory[m, t-1]
+                    previous_inventory = if t == 1
+                        customer.initial_inventory[m]
+                    else
+                        customer.inventory[m, t - 1]
+                    end
                     customer.inventory[m, t] = (
                         max(0, previous_inventory - customer.demand[m, t]) +
                         customer.quantity_received[m, t]

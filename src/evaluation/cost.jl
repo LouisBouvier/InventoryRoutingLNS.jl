@@ -51,11 +51,14 @@ The excess inventory cost on day `t` for commodity `m` is defined as the product
 number of commodities of type `m` above the maximum inventory and the unit excess cost. 
 The unit excess cost is defined for each depot on each day for each commodity. 
 """
-function compute_inventory_cost(depot::Depot, t::Int, ms::Vector{Int} = collect(1:get_M(depot)))
+function compute_inventory_cost(
+    depot::Depot, t::Int, ms::Vector{Int}=collect(1:get_M(depot))
+)
     cost = 0
-    for m in ms 
-        cost += depot.excess_inventory_cost[m] *
-        max(0, depot.inventory[m, t] - depot.maximum_inventory[m, t])
+    for m in ms
+        cost +=
+            depot.excess_inventory_cost[m] *
+            max(0, depot.inventory[m, t] - depot.maximum_inventory[m, t])
     end
     return cost
 end
@@ -70,7 +73,11 @@ Compute the excess inventory cost of `depot` on the period `ts` for the commodit
 
 We sum the inventory costs of the commodities indexed by `ms` on the days `ts`. 
 """
-function compute_inventory_cost(depot::Depot, ms::Vector{Int} = collect(1:get_M(depot)), ts::Vector{Int} = collect(1:get_T(depot)))
+function compute_inventory_cost(
+    depot::Depot,
+    ms::Vector{Int}=collect(1:get_M(depot)),
+    ts::Vector{Int}=collect(1:get_T(depot)),
+)
     return sum(compute_inventory_cost(depot, t, ms) for t in ts)
 end
 
@@ -85,11 +92,14 @@ The excess inventory cost on day `t` for commodity `m` is defined as the product
 number of commodities of type `m` above the maximum inventory and the unit excess cost. 
 The unit excess cost is defined for each customer on each day for each commodity. 
 """
-function compute_inventory_cost(customer::Customer, t::Int, ms::Vector{Int} = collect(1:get_M(customer)))
-    cost = 0 
-    for m in ms 
-        cost += customer.excess_inventory_cost[m] *
-        max(0, customer.inventory[m, t] - customer.maximum_inventory[m, t]) 
+function compute_inventory_cost(
+    customer::Customer, t::Int, ms::Vector{Int}=collect(1:get_M(customer))
+)
+    cost = 0
+    for m in ms
+        cost +=
+            customer.excess_inventory_cost[m] *
+            max(0, customer.inventory[m, t] - customer.maximum_inventory[m, t])
     end
     return cost
 end
@@ -104,7 +114,11 @@ Compute the excess inventory cost of `customer` on the period `ts` for the commo
 
 We sum the inventory costs of the commodities indexed by `ms` on the days `ts`.
 """
-function compute_inventory_cost(customer::Customer, ms::Vector{Int} = collect(1:get_M(customer)), ts::Vector{Int} = collect(1:get_T(customer)))
+function compute_inventory_cost(
+    customer::Customer,
+    ms::Vector{Int}=collect(1:get_M(customer)),
+    ts::Vector{Int}=collect(1:get_T(customer)),
+)
     return sum(compute_inventory_cost(customer, t, ms) for t in ts)
 end
 
@@ -118,14 +132,16 @@ number of commodities of type `m` below the minimum inventory on the morning of 
 (thus inventory of the previous evening less the demand on day `t`) and the unit shortage cost. 
 The unit shortage cost is defined for each customer for each commodity. 
 """
-function compute_shortage_cost(customer::Customer, t::Int, ms::Vector{Int} = collect(1:get_M(customer)))
+function compute_shortage_cost(
+    customer::Customer, t::Int, ms::Vector{Int}=collect(1:get_M(customer))
+)
     cost = 0
     for m in ms
         cost +=
             customer.shortage_cost[m] * max(
                 0,
                 customer.demand[m, t] -
-                (t == 1 ? customer.initial_inventory[m] : customer.inventory[m, t-1]),
+                (t == 1 ? customer.initial_inventory[m] : customer.inventory[m, t - 1]),
             )
     end
     return cost
@@ -141,7 +157,11 @@ Compute the shortage cost of `customer` on the period `ts` for the commodities i
 
 We sum the shortage costs of the commodities indexed by `ms` on the days `ts`.
 """
-function compute_shortage_cost(customer::Customer, ms::Vector{Int} = collect(1:get_M(customer)), ts::Vector{Int} = collect(1:get_T(customer)))
+function compute_shortage_cost(
+    customer::Customer,
+    ms::Vector{Int}=collect(1:get_M(customer)),
+    ts::Vector{Int}=collect(1:get_T(customer)),
+)
     return sum(compute_shortage_cost(customer, t, ms) for t in ts)
 end
 
@@ -168,11 +188,11 @@ Notably for neighborhoods, when computing the cost, we may want to restrict the 
 """
 function compute_undetailed_cost(
     instance::Instance;
-    ds::Vector{Int} = collect(1:instance.D),
-    cs::Vector{Int} = collect(1:instance.C),
-    ms::Vector{Int} = collect(1:instance.M),
-    ts::Vector{Int} = collect(1:instance.T),
-    solution::Solution = instance.solution,
+    ds::Vector{Int}=collect(1:(instance.D)),
+    cs::Vector{Int}=collect(1:(instance.C)),
+    ms::Vector{Int}=collect(1:(instance.M)),
+    ts::Vector{Int}=collect(1:(instance.T)),
+    solution::Solution=instance.solution,
 )
     cost = 0
     for depot in instance.depots[ds]
@@ -204,11 +224,11 @@ decomposition of the cost. It may be useful for tests and investigation.
 """
 function compute_detailed_cost(
     instance::Instance;
-    ds::Vector{Int} = collect(1:instance.D),
-    cs::Vector{Int} = collect(1:instance.C),
-    ms::Vector{Int} = collect(1:instance.M),
-    ts::Vector{Int} = collect(1:instance.T),
-    solution::Solution = instance.solution,
+    ds::Vector{Int}=collect(1:(instance.D)),
+    cs::Vector{Int}=collect(1:(instance.C)),
+    ms::Vector{Int}=collect(1:(instance.M)),
+    ts::Vector{Int}=collect(1:(instance.T)),
+    solution::Solution=instance.solution,
 )
     D, C = instance.D, instance.C
     depots, customers = instance.depots[ds], instance.customers[cs]
@@ -227,15 +247,17 @@ function compute_detailed_cost(
         "Cost depots inventory: $depot_inventory_cost thus $(depot_inventory_cost / D) per depot",
     )
 
-    customer_inventory_cost =
-        sum(compute_inventory_cost(customer, ms, ts) for customer in customers)
+    customer_inventory_cost = sum(
+        compute_inventory_cost(customer, ms, ts) for customer in customers
+    )
     details[:customer_inventory_cost] = customer_inventory_cost
     println(
         "Cost customers inventory: $customer_inventory_cost thus $(customer_inventory_cost / C) per customer",
     )
 
-    customer_shortage_cost =
-        sum(compute_shortage_cost(customer, ms, ts) for customer in customers)
+    customer_shortage_cost = sum(
+        compute_shortage_cost(customer, ms, ts) for customer in customers
+    )
     details[:customer_shortage_cost] = customer_shortage_cost
     println(
         "Cost customers shortage : $customer_shortage_cost thus $(customer_shortage_cost / C) per customer",
@@ -281,25 +303,21 @@ Two possible cases:
 """
 function compute_cost(
     instance::Instance;
-    ds::Vector{Int} = collect(1:instance.D),
-    cs::Vector{Int} = collect(1:instance.C),
-    ms::Vector{Int} = collect(1:instance.M),
-    ts::Vector{Int} = collect(1:instance.T),
-    solution::Solution = instance.solution,
-    verbose::Bool = false,
+    ds::Vector{Int}=collect(1:(instance.D)),
+    cs::Vector{Int}=collect(1:(instance.C)),
+    ms::Vector{Int}=collect(1:(instance.M)),
+    ts::Vector{Int}=collect(1:(instance.T)),
+    solution::Solution=instance.solution,
+    verbose::Bool=false,
 )
     if verbose
-        total_cost, _ =
-            compute_detailed_cost(instance, ds = ds, cs = cs, ms = ms, ts = ts, solution = solution)
+        total_cost, _ = compute_detailed_cost(
+            instance; ds=ds, cs=cs, ms=ms, ts=ts, solution=solution
+        )
         return total_cost
     else
         return compute_undetailed_cost(
-            instance,
-            ds = ds,
-            cs = cs,
-            ms = ms,
-            ts = ts,
-            solution = solution,
+            instance; ds=ds, cs=cs, ms=ms, ts=ts, solution=solution
         )
     end
 end

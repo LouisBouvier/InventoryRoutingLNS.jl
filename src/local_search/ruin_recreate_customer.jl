@@ -13,14 +13,16 @@ function remove_customer!(instance::Instance, c::Int)
     for route in routes
         # optimize_route!(route, instance)
         for (s, stop) in enumerate(route.stops)
-            if stop.c == c 
+            if stop.c == c
                 route_copy = mycopy(route)
                 deleteat!(route_copy.stops, s)
                 if isempty(route_copy.stops)
                     former_quantities_new_routes[:, route.d, route.t] += stop.Q
                     update_instance_some_routes!(instance, [route], "delete")
                 else
-                    update_route_order!(route_copy, instance, collect(1:get_nb_stops(route_copy)))
+                    update_route_order!(
+                        route_copy, instance, collect(1:get_nb_stops(route_copy))
+                    )
                     update_instance_some_routes!(instance, [route], "delete")
                     update_instance_some_routes!(instance, [route_copy], "add")
                     former_quantities_former_routes[route_copy.id] = (s, stop.Q)
@@ -57,24 +59,38 @@ function location_and_cost_insertion!(instance::Instance, c::Int, routes::Vector
             content = content_size(route, instance)
             T, M = instance.T, instance.M
             cs = unique_stops(route)
-            ts = collect(route.t:T) 
-            ms = [m for m = 1:M if uses_commodity(route, m)]
+            ts = collect((route.t):T)
+            ms = [m for m in 1:M if uses_commodity(route, m)]
             # compute the cost without the new customer (customers' inventory and routing)
-            oldcost = compute_cost(instance, ds = Vector{Int}(), cs = cs, ms = ms, ts = ts, solution = SimpleSolution([route]))
-            costs_r = - ones(nb_stops+1) 
-            dates_r = ones(nb_stops+1)
-            for i = (1:nb_stops+1) 
+            oldcost = compute_cost(
+                instance;
+                ds=Vector{Int}(),
+                cs=cs,
+                ms=ms,
+                ts=ts,
+                solution=SimpleSolution([route]),
+            )
+            costs_r = -ones(nb_stops + 1)
+            dates_r = ones(nb_stops + 1)
+            for i in (1:(nb_stops + 1))
                 newroute = mycopy(route)
-                insert!(newroute.stops, i, RouteStop(c = c, t = route.t, Q = zeros(M)))
+                insert!(newroute.stops, i, RouteStop(; c=c, t=route.t, Q=zeros(M)))
                 update_route_order!(newroute, instance, collect(1:get_nb_stops(newroute)))
                 if newroute.stops[end].t > T
                     continue
                 end
-                date_arrival = newroute.stops[i].t  
+                date_arrival = newroute.stops[i].t
                 # compute the cost with the new customer at position i (customers' inventory and routing)
                 update_instance_some_routes!(instance, [route], "delete", false)
                 update_instance_some_routes!(instance, [newroute], "add", false)
-                newcost = compute_cost(instance, ds = Vector{Int}(), cs = cs, ms = ms, ts = ts, solution = SimpleSolution([newroute]))
+                newcost = compute_cost(
+                    instance;
+                    ds=Vector{Int}(),
+                    cs=cs,
+                    ms=ms,
+                    ts=ts,
+                    solution=SimpleSolution([newroute]),
+                )
                 update_instance_some_routes!(instance, [newroute], "delete", false)
                 update_instance_some_routes!(instance, [route], "add", false)
                 # deduce the cost of adding customer c at place i of route r and corresponding arrival date 
@@ -130,40 +146,43 @@ function coupling_constraint_customer_flow_insertion!(
     costs::Vector,
     dates::Vector,
 )
-
     D, T, M = instance.D, instance.T, instance.M
     vehicle_capacity = instance.vehicle_capacity
-    l = [instance.commodities[m].l for m = 1:M]
+    l = [instance.commodities[m].l for m in 1:M]
     # Coupling vehicles and commodities
 
     # Trip d => c new routes
-    @showprogress "Link trips d=>c new routes" for d = 1:D, t = 1:T
-        n1 = FGN(t = t, d = d, str = "morning")
-        arrival_date = t + floor(instance.transport_durations[d, D+customer_index] / instance.nb_transport_hours_per_day)
+    @showprogress "Link trips d=>c new routes" for d in 1:D, t in 1:T
+        n1 = FGN(; t=t, d=d, str="morning")
+        arrival_date =
+            t + floor(
+                instance.transport_durations[d, D + customer_index] /
+                instance.nb_transport_hours_per_day,
+            )
         if arrival_date <= T
-            n2 = FGN(t = arrival_date, c = customer_index, str = "evening")
+            n2 = FGN(; t=arrival_date, c=customer_index, str="evening")
             edge12m = get_edgeindex(fgs_commodities[1], n1, n2)
             edge12veh = get_edgeindex(fg_vehicles, n1, n2)
             @constraint(
                 model,
-                sum(model[:z][i_m, edge12m] * l[indices_m[i_m]] for i_m = 1:nb_m) <=
-                model[:x][edge12veh] * vehicle_capacity
+                sum(model[:z][i_m, edge12m] * l[indices_m[i_m]] for i_m in 1:nb_m) <=
+                    model[:x][edge12veh] * vehicle_capacity
             )
         end
     end
     # Trip d => c former routes
     @showprogress "Link trips d=>c former routes" for (r, route) in
                                                       enumerate(old_possible_routes)
-        for i = 1:(get_nb_stops(route)+1)
+        for i in 1:(get_nb_stops(route) + 1)
             if costs[r][i] != -1
-                n1 = FGN(t = route.t, str = "route_$r")
-                n2 = FGN(t = dates[r][i], c = customer_index, s = i, str = "route_$r")
+                n1 = FGN(; t=route.t, str="route_$r")
+                n2 = FGN(; t=dates[r][i], c=customer_index, s=i, str="route_$r")
                 edge12m = get_edgeindex(fgs_commodities[1], n1, n2)
                 edge12veh = get_edgeindex(fg_vehicles, n1, n2)
                 @constraint(
                     model,
-                    sum(model[:z][i_m, edge12m] * l[indices_m[i_m]] for i_m = 1:nb_m) <=
-                    model[:x][edge12veh] * places[r]
+                    sum(model[:z][i_m, edge12m] * l[indices_m[i_m]] for i_m in 1:nb_m) <=
+                        model[:x][edge12veh] * places[r]
                 )
             end
         end
@@ -184,15 +203,12 @@ This cost is the sum of:
 - one commodity cost per commodity given `fgs_commodities` arcs costs.
 """
 function build_model_objective_customer_insertion_flow!(
-    model::JuMP.Model,
-    fg_vehicles::FlowGraph,
-    fgs_commodities::Vector{FlowGraph},
-    nb_m::Int,
+    model::JuMP.Model, fg_vehicles::FlowGraph, fgs_commodities::Vector{FlowGraph}, nb_m::Int
 )
     # objective function
     obj = AffExpr(0.0)
     add_flow_cost!(obj, model[:x], fg_vehicles)
-    @showprogress "Commodities objective function" for i_m = 1:nb_m
+    @showprogress "Commodities objective function" for i_m in 1:nb_m
         add_flow_cost!(obj, model[:z][i_m, :], fgs_commodities[i_m])
     end
     @objective(model, Min, obj)
@@ -229,7 +245,7 @@ function customer_insertion_flow(
     costs::Vector,
     places::Vector,
     dates::Vector,
-    former_quantities_former_routes::Dict, 
+    former_quantities_former_routes::Dict,
     former_quantities_new_routes::Array,
     use_warm_start::Bool,
     force_values::Bool,
@@ -241,11 +257,11 @@ function customer_insertion_flow(
 
     ## Vehicles flow
     fg_vehicles = expanded_vehicle_flow_graph_customer(
-        instance,
-        customer_index = customer_index,
-        routes = old_possible_routes,
-        cost_per_route = costs,
-        dates = dates,
+        instance;
+        customer_index=customer_index,
+        routes=old_possible_routes,
+        cost_per_route=costs,
+        dates=dates,
     )
 
     @variable(model, x[1:ne(fg_vehicles)] >= 0, integer = true)
@@ -260,32 +276,32 @@ function customer_insertion_flow(
 
     fgs_commodities = Vector{FlowGraph}(undef, nb_m)
     fg_commodity_ref = commodity_flow_graph_customer(
-        instance,
-        customer_index = customer_index,
-        commodity_index = 1,
-        routes = old_possible_routes,
-        dates = dates,
-        costs = costs,
+        instance;
+        customer_index=customer_index,
+        commodity_index=1,
+        routes=old_possible_routes,
+        dates=dates,
+        costs=costs,
     )
     @variable(model, z[1:nb_m, 1:ne(fg_commodity_ref)] >= 0, integer = true)
     if use_warm_start
-        set_start_value.(z, values_commodities_flows)        
+        set_start_value.(z, values_commodities_flows)
     end
     count_m = 0
     indices_m = []
-    @showprogress "Commodity flow graph " for m = 1:M
+    @showprogress "Commodity flow graph " for m in 1:M
         if commodities_of_c[m]
             count_m += 1
             fgs_commodities[count_m] = commodity_flow_graph_customer(
-                instance,
-                customer_index = customer_index,
-                commodity_index = m,
-                routes = old_possible_routes,
-                dates = dates,
-                costs = costs,
-                force_values = force_values,
-                former_quantities_former_routes = former_quantities_former_routes, 
-                former_quantities_new_routes = former_quantities_new_routes,
+                instance;
+                customer_index=customer_index,
+                commodity_index=m,
+                routes=old_possible_routes,
+                dates=dates,
+                costs=costs,
+                force_values=force_values,
+                former_quantities_former_routes=former_quantities_former_routes,
+                former_quantities_new_routes=former_quantities_new_routes,
             )
             add_flow_constraints!(model, model[:z][count_m, :], fgs_commodities[count_m])
             push!(indices_m, m)
@@ -308,14 +324,10 @@ function customer_insertion_flow(
         dates,
     )
 
-
     ## Create objective function
 
     build_model_objective_customer_insertion_flow!(
-        model,
-        fg_vehicles,
-        fgs_commodities,
-        nb_m,
+        model, fg_vehicles, fgs_commodities, nb_m
     )
 
     ## Set the optimizer and optimize
@@ -328,7 +340,7 @@ function customer_insertion_flow(
     # set_optimizer_attribute(model, "ratioGap", 0.03)
     if use_warm_start
         set_optimizer_attribute(model, "MIPGap", 0.005)
-        set_optimizer_attribute(model, "TimeLimit", 20)    
+        set_optimizer_attribute(model, "TimeLimit", 20)
     end
     set_optimizer_attribute(model, "OutputFlag", 0)
     set_optimizer_attribute(model, "Method", 1)
@@ -365,12 +377,12 @@ function fill_former_routes_customer_insertion!(
 )
     ## Fill former routes
     M = instance.M
-    l = [instance.commodities[m].l for m = 1:M]
+    l = [instance.commodities[m].l for m in 1:M]
 
     quty_former_routes = zeros(M)
     println("Fill former routes")
     for (r, route) in enumerate(old_possible_routes)
-        n1 = FGN(t = route.t, str = "route_$r")
+        n1 = FGN(; t=route.t, str="route_$r")
         index_n1 = get_vertexindex(fg_commodity, n1)
         route_updated = false
         for out_neighbor_index in outneighbors(fg_commodity, index_n1)
@@ -384,7 +396,7 @@ function fill_former_routes_customer_insertion!(
                 Q = zeros(M)
                 Q[BitArray(commodities_of_c)[:, 1]] = sent_quantity
                 quty_former_routes += Q
-                stop = RouteStop(c = customer_index, t = n2.t, Q = Q)
+                stop = RouteStop(; c=customer_index, t=n2.t, Q=Q)
                 insert!(new_route.stops, n2.s, stop) #insert at proper position
                 update_route_order!(new_route, instance, collect(1:get_nb_stops(new_route)))
                 # optimize_route!(new_route, instance)
@@ -400,9 +412,8 @@ function fill_former_routes_customer_insertion!(
             update_instance_some_routes!(instance, [newroute], "add")
         end
     end
-    println(
-        "Total content sent by new routes: ",
-        sum(quty_former_routes[m] * l[m] for m = 1:M),
+    return println(
+        "Total content sent by new routes: ", sum(quty_former_routes[m] * l[m] for m in 1:M)
     )
 end
 
@@ -431,7 +442,7 @@ function fill_new_routes_customer_insertion!(
 )
     D, T, M = instance.D, instance.T, instance.M
     vehicle_capacity = instance.vehicle_capacity
-    l = [instance.commodities[m].l for m = 1:M]
+    l = [instance.commodities[m].l for m in 1:M]
 
     ## New direct routes
     println("Fill new routes")
@@ -444,33 +455,37 @@ function fill_new_routes_customer_insertion!(
         if n1.d > 0 && n2.c > 0
             t = n1.t
             d, c = n1.d, n2.c
-            for i_m = 1:nb_m
+            for i_m in 1:nb_m
                 sent_quantities[indices_m[i_m], d, t] += flows[i_m, k]
             end
         end
     end
     # Fill new routes by bin packing
-    sent_quantities_new_routes = sum(sent_quantities, dims = [2, 3])
+    sent_quantities_new_routes = sum(sent_quantities; dims=[2, 3])
     println(
         "Total content sent by new routes: ",
-        sum(sent_quantities_new_routes[m] * l[m] for m = 1:M),
+        sum(sent_quantities_new_routes[m] * l[m] for m in 1:M),
     )
-    for t = 1:T, d = 1:D
+    for t in 1:T, d in 1:D
         quant = sent_quantities[1:M, d, t]
         if sum(quant) == 0
             continue
         end
-        items = [m for m = 1:M for n = 1:quant[m]]
-        lengths = [l[m] for m = 1:M for n = 1:quant[m]]
+        items = [m for m in 1:M for n in 1:quant[m]]
+        lengths = [l[m] for m in 1:M for n in 1:quant[m]]
         bin_items = first_fit_decreasing(items, lengths, vehicle_capacity)
         for bin in bin_items
             Q = zeros(Int, M)
             for m in bin
                 Q[m] += 1
             end
-            arrival_time = t + floor(instance.transport_durations[d, D+customer_index] / instance.nb_transport_hours_per_day)
-            stop = RouteStop(c = customer_index, t = arrival_time ,Q = Q)
-            route = Route(t = t, d = d, stops = [stop])
+            arrival_time =
+                t + floor(
+                    instance.transport_durations[d, D + customer_index] /
+                    instance.nb_transport_hours_per_day,
+                )
+            stop = RouteStop(; c=customer_index, t=arrival_time, Q=Q)
+            route = Route(; t=t, d=d, stops=[stop])
             update_instance_some_routes!(instance, [route], "add")
         end
     end
@@ -502,55 +517,51 @@ function one_step_ruin_recreate_customer!(instance::Instance, customer_index::In
 
     ## Remove the customer from the solution
     println("Remove customer: ", customer_index)
-    former_quantities_former_routes, 
-    former_quantities_new_routes = remove_customer!(instance, customer_index)
-
+    former_quantities_former_routes, former_quantities_new_routes = remove_customer!(
+        instance, customer_index
+    )
 
     ## Find the dedicated places costs and timing for insertion 
     routes = list_routes(instance.solution)
-    costs, dates, places, old_possible_routes =
-        location_and_cost_insertion!(
-            instance, 
-            customer_index, 
-            routes)
+    costs, dates, places, old_possible_routes = location_and_cost_insertion!(
+        instance, customer_index, routes
+    )
 
     ## Get the flows from the former configuration
     println("Solve the initialization flow problem for $nb_m commodities")
-    _, fgs_commodities, model, indices_m, old_possible_routes =
-        customer_insertion_flow(
-            instance;
-            customer_index = customer_index, 
-            old_possible_routes = old_possible_routes,
-            costs = costs,
-            places = places,
-            dates = dates,
-            former_quantities_former_routes = former_quantities_former_routes, 
-            former_quantities_new_routes = former_quantities_new_routes,
-            use_warm_start = false,
-            force_values = true,
-            values_vehicles_flow = ones(1),
-            values_commodities_flows = ones(1),
-            )
+    _, fgs_commodities, model, indices_m, old_possible_routes = customer_insertion_flow(
+        instance;
+        customer_index=customer_index,
+        old_possible_routes=old_possible_routes,
+        costs=costs,
+        places=places,
+        dates=dates,
+        former_quantities_former_routes=former_quantities_former_routes,
+        former_quantities_new_routes=former_quantities_new_routes,
+        use_warm_start=false,
+        force_values=true,
+        values_vehicles_flow=ones(1),
+        values_commodities_flows=ones(1),
+    )
     flows_commodities = trunc.(Int, value.(model[:z]))
     flows_vehicles = trunc.(Int, value.(model[:x]))
 
     ## Solve the insertion problem with warm start
     println("Solve the insertion flow problem for $nb_m commodities")
-    _, fgs_commodities, model, indices_m, old_possible_routes =
-        customer_insertion_flow(
-            instance;
-            customer_index = customer_index, 
-            old_possible_routes = old_possible_routes,
-            costs = costs,
-            places = places,
-            dates = dates,
-            former_quantities_former_routes = former_quantities_former_routes, 
-            former_quantities_new_routes = former_quantities_new_routes,
-            use_warm_start = true,
-            force_values = false,
-            values_vehicles_flow = flows_vehicles,
-            values_commodities_flows = flows_commodities,
-            )
+    _, fgs_commodities, model, indices_m, old_possible_routes = customer_insertion_flow(
+        instance;
+        customer_index=customer_index,
+        old_possible_routes=old_possible_routes,
+        costs=costs,
+        places=places,
+        dates=dates,
+        former_quantities_former_routes=former_quantities_former_routes,
+        former_quantities_new_routes=former_quantities_new_routes,
+        use_warm_start=true,
+        force_values=false,
+        values_vehicles_flow=flows_vehicles,
+        values_commodities_flows=flows_commodities,
+    )
     fg_commodity = fgs_commodities[1]
     flows_commodities = trunc.(Int, value.(model[:z]))
 
@@ -566,16 +577,11 @@ function one_step_ruin_recreate_customer!(instance::Instance, customer_index::In
 
     ## Fill new direct routes
     fill_new_routes_customer_insertion!(
-        instance,
-        fg_commodity,
-        flows_commodities,
-        indices_m,
-        nb_m,
-        customer_index,
+        instance, fg_commodity, flows_commodities, indices_m, nb_m, customer_index
     )
 
     final_cost = compute_cost(instance)
-    if (final_cost - initial_cost)/initial_cost > 0.01
+    if (final_cost - initial_cost) / initial_cost > 0.01
         println("New cost: $final_cost, reset to initial solution")
         instance.solution = intial_solution
         update_instance_from_solution!(instance)

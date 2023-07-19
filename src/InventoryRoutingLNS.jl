@@ -18,7 +18,6 @@ using SparseArrays
 
 using DataStructures: OrderedDict
 
-
 include("IRP/commodity.jl")
 include("IRP/site.jl")
 include("IRP/depot.jl")

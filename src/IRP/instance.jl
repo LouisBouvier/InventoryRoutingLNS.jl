@@ -128,8 +128,7 @@ mutable struct InstanceArrays
     function InstanceArrays(instance::Instance)
         D, C, T, M = instance.D, instance.C, instance.T, instance.M
         vehicle_capacity, km_cost, stop_cost, vehicle_cost = instance.vehicle_capacity,
-        instance.km_cost,
-        instance.stop_cost,
+        instance.km_cost, instance.stop_cost,
         instance.vehicle_cost
         nb_transport_hours_per_day = instance.nb_transport_hours_per_day
         S_max = instance.S_max
@@ -137,32 +136,42 @@ mutable struct InstanceArrays
         dist = instance.dist
         transport_durations = instance.transport_durations
 
-        l = Int[instance.commodities[m].l for m = 1:M]
+        l = Int[instance.commodities[m].l for m in 1:M]
 
-        excess_inventory_costs_depots =
-            [depots[d].excess_inventory_cost[m] for m = 1:M, d = 1:D]
-        excess_inventory_costs_customers =
-            [customers[c].excess_inventory_cost[m] for m = 1:M, c = 1:C]
-        shortage_costs_customers = [customers[c].shortage_cost[m] for m = 1:M, c = 1:C]
+        excess_inventory_costs_depots = [
+            depots[d].excess_inventory_cost[m] for m in 1:M, d in 1:D
+        ]
+        excess_inventory_costs_customers = [
+            customers[c].excess_inventory_cost[m] for m in 1:M, c in 1:C
+        ]
+        shortage_costs_customers = [customers[c].shortage_cost[m] for m in 1:M, c in 1:C]
 
-        initial_inventory_depots = [depots[d].initial_inventory[m] for m = 1:M, d = 1:D]
-        initial_inventory_customers =
-            [customers[c].initial_inventory[m] for m = 1:M, c = 1:C]
+        initial_inventory_depots = [depots[d].initial_inventory[m] for m in 1:M, d in 1:D]
+        initial_inventory_customers = [
+            customers[c].initial_inventory[m] for m in 1:M, c in 1:C
+        ]
 
-        maximum_inventory_depots =
-            [depots[d].maximum_inventory[m, t] for m = 1:M, d = 1:D, t = 1:T]
-        maximum_inventory_customers =
-            [customers[c].maximum_inventory[m, t] for m = 1:M, c = 1:C, t = 1:T]
+        maximum_inventory_depots = [
+            depots[d].maximum_inventory[m, t] for m in 1:M, d in 1:D, t in 1:T
+        ]
+        maximum_inventory_customers = [
+            customers[c].maximum_inventory[m, t] for m in 1:M, c in 1:C, t in 1:T
+        ]
 
-        production_depots = [depots[d].production[m, t] for m = 1:M, d = 1:D, t = 1:T]
-        demand_customers = [customers[c].demand[m, t] for m = 1:M, c = 1:C, t = 1:T]
+        production_depots = [depots[d].production[m, t] for m in 1:M, d in 1:D, t in 1:T]
+        demand_customers = [customers[c].demand[m, t] for m in 1:M, c in 1:C, t in 1:T]
 
-        quantity_sent_depots = [depots[d].quantity_sent[m, t] for m = 1:M, d = 1:D, t = 1:T]
-        quantity_received_customers =
-            [customers[c].quantity_received[m, t] for m = 1:M, c = 1:C, t = 1:T]
+        quantity_sent_depots = [
+            depots[d].quantity_sent[m, t] for m in 1:M, d in 1:D, t in 1:T
+        ]
+        quantity_received_customers = [
+            customers[c].quantity_received[m, t] for m in 1:M, c in 1:C, t in 1:T
+        ]
 
-        inventory_depots = [depots[d].inventory[m, t] for m = 1:M, d = 1:D, t = 1:T]
-        inventory_customers = [customers[c].inventory[m, t] for m = 1:M, c = 1:C, t = 1:T]
+        inventory_depots = [depots[d].inventory[m, t] for m in 1:M, d in 1:D, t in 1:T]
+        inventory_customers = [
+            customers[c].inventory[m, t] for m in 1:M, c in 1:C, t in 1:T
+        ]
 
         solution = instance.solution
 
@@ -205,7 +214,7 @@ Display `instance` in the terminal.
 """
 function Base.show(io::IO, instance::Instance)
     str = "IRP Instance with $(instance.T) days, $(instance.D) depots, $(instance.C) customers, $(instance.M) commodities and $(nb_routes(instance.solution)) routes in the solution."
-    print(io, str)
+    return print(io, str)
 end
 
 """
@@ -214,23 +223,23 @@ end
 Copy `instance`.
 """
 function Base.copy(instance::Instance)
-    return Instance(
-        T = instance.T,
-        D = instance.D,
-        C = instance.C,
-        M = instance.M,
-        vehicle_capacity = instance.vehicle_capacity,
-        km_cost = instance.km_cost,
-        vehicle_cost = instance.vehicle_cost,
-        stop_cost = instance.stop_cost,
-        nb_transport_hours_per_day = instance.nb_transport_hours_per_day,
-        S_max = instance.S_max,
-        commodities = [copy(commodity) for commodity in instance.commodities],
-        depots = [copy(depot) for depot in instance.depots],
-        customers = [copy(customer) for customer in instance.customers],
-        dist = copy(instance.dist),
-        transport_durations = copy(instance.transport_durations),
-        solution = copy(instance.solution),
+    return Instance(;
+        T=instance.T,
+        D=instance.D,
+        C=instance.C,
+        M=instance.M,
+        vehicle_capacity=instance.vehicle_capacity,
+        km_cost=instance.km_cost,
+        vehicle_cost=instance.vehicle_cost,
+        stop_cost=instance.stop_cost,
+        nb_transport_hours_per_day=instance.nb_transport_hours_per_day,
+        S_max=instance.S_max,
+        commodities=[copy(commodity) for commodity in instance.commodities],
+        depots=[copy(depot) for depot in instance.depots],
+        customers=[copy(customer) for customer in instance.customers],
+        dist=copy(instance.dist),
+        transport_durations=copy(instance.transport_durations),
+        solution=copy(instance.solution),
     )
 end
 
@@ -243,7 +252,6 @@ Get the vehicle cost data of `instance`.
 It is used in the cost functions as [`compute_route_cost`](@ref).
 """
 get_vehicle_cost(instance::Instance) = instance.vehicle_cost
-
 
 ## Customer and depot filters
 """
@@ -302,7 +310,7 @@ Compute the 1D space occupied by the quantities to be sent to `stop`.
 """
 function content_size(stop::RouteStop, instance::Instance)
     leng = 0
-    for m = 1:instance.M
+    for m in 1:(instance.M)
         leng += stop.Q[m] * instance.commodities[m].l
     end
     return leng
@@ -315,7 +323,7 @@ Compute the space used in the 1D vehicle of `route` by all stops deliveries.
 """
 function content_size(route::Route, instance::Instance)
     leng = 0
-    for stop in route.stops, m = 1:instance.M
+    for stop in route.stops, m in 1:(instance.M)
         leng += stop.Q[m] * instance.commodities[m].l
     end
     return leng
@@ -363,7 +371,6 @@ function compute_route_duration(route::Route, instance::Instance)
     return duration
 end
 
-
 """
     routes_to_sent_quantities(solution::StructuredSolution, instance::Instance)
 
@@ -373,8 +380,8 @@ per commodity and per day from `solution` (set of routes).
 function routes_to_sent_quantities(solution::StructuredSolution, instance::Instance)
     D, C, T, M = instance.D, instance.C, instance.T, instance.M
     sent_quantities = zeros(Int, M, D, C, T)
-    for t = 1:T
-        for d = 1:D
+    for t in 1:T
+        for d in 1:D
             for route in solution.routes_per_day_and_depot[t, d]
                 for stop in route.stops
                     c = stop.c
@@ -416,15 +423,14 @@ in [`rescale_release_demand!`](@ref) to test algorithms.
 function ratio_demanded_released(instance::Instance)
     total_releases = zeros(instance.M)
     for depot in instance.depots
-        total_releases .+= sum(depot.production, dims = 2)[:, 1]
+        total_releases .+= sum(depot.production; dims=2)[:, 1]
     end
     total_demands = zeros(instance.M)
     for customer in instance.customers
-        total_demands .+= sum(customer.demand, dims = 2)[:, 1]
+        total_demands .+= sum(customer.demand; dims=2)[:, 1]
     end
     return total_demands ./ total_releases
 end
-
 
 """
     rescale_release_demand!(instance::Instance; verbose::Bool = false)
@@ -434,23 +440,24 @@ Rescale `instance` demand and release.
 The aim is to have total demand close to total release. Instances with 
 this property are more difficult to solve. 
 """
-function rescale_release_demand!(instance::Instance; verbose::Bool = false)
+function rescale_release_demand!(instance::Instance; verbose::Bool=false)
     ratios = ratio_demanded_released(instance)
     for depot in instance.depots
-        for m = 1:instance.M
+        for m in 1:(instance.M)
             if ratios[m] == Inf ||
-               isnan(ratios[m]) ||
-               any(depot.production[m, :] .> 100000) ||
-               any(depot.maximum_inventory[m, :] .> 100000)
+                isnan(ratios[m]) ||
+                any(depot.production[m, :] .> 100000) ||
+                any(depot.maximum_inventory[m, :] .> 100000)
                 continue
             else
-                for t = 1:instance.T
+                for t in 1:(instance.T)
                     depot.production[m, t] = floor(depot.production[m, t] * ratios[m])
-                    depot.maximum_inventory[m, t] =
-                        floor(depot.maximum_inventory[m, t] * ratios[m])
+                    depot.maximum_inventory[m, t] = floor(
+                        depot.maximum_inventory[m, t] * ratios[m]
+                    )
                 end
             end
         end
     end
-    verbose && println("Scaled production to meet demand")
+    return verbose && println("Scaled production to meet demand")
 end

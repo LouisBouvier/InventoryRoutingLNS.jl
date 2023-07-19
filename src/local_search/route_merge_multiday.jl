@@ -11,7 +11,7 @@ function concatenate_multiday(routes::Vector{Route})::Route
             error("Routes with different depots")
         end
     end
-    return Route(t = t, d = d, stops = [copy(stop) for route in routes for stop in route.stops])
+    return Route(; t=t, d=d, stops=[copy(stop) for route in routes for stop in route.stops])
 end
 
 function merge_multiday(route1::Route, route2::Route, instance::Instance)
@@ -33,9 +33,8 @@ Compute the cost gain of merging two routes.
 `Inf` if infeasible.
 """
 function gain_merge_multiday(route1::Route, route2::Route, instance::Instance)::Float64
-
     if content_size(route1, instance) + content_size(route2, instance) >
-       instance.vehicle_capacity
+        instance.vehicle_capacity
         return Inf
     elseif length(unique_stops([route1, route2])) > instance.S_max
         return Inf
@@ -49,14 +48,24 @@ function gain_merge_multiday(route1::Route, route2::Route, instance::Instance)::
             d = route1.d
             earliest_departure_date = min(route1.t, route2.t)
             ts = collect(earliest_departure_date:T)
-            ms = [m for m = 1:M if (uses_commodity(route1, m) || uses_commodity(route2, m))]
-            oldcost = compute_cost(instance, ds = [d], cs = cs, ms = ms, ts = ts, solution = SimpleSolution([route1, route2]))
+            ms = [
+                m for m in 1:M if (uses_commodity(route1, m) || uses_commodity(route2, m))
+            ]
+            oldcost = compute_cost(
+                instance;
+                ds=[d],
+                cs=cs,
+                ms=ms,
+                ts=ts,
+                solution=SimpleSolution([route1, route2]),
+            )
             # Compute new cost
             update_instance_some_routes!(instance, [route1, route2], "delete", false)
             update_instance_some_routes!(instance, [newroute], "add", false)
-            newcost = compute_cost(instance, ds = [d], cs = cs, ms = ms, ts = ts, solution = SimpleSolution([newroute]))
-            feasible =
-                feasibility(instance, ds = [d], cs = cs, solution = SimpleSolution([]))
+            newcost = compute_cost(
+                instance; ds=[d], cs=cs, ms=ms, ts=ts, solution=SimpleSolution([newroute])
+            )
+            feasible = feasibility(instance; ds=[d], cs=cs, solution=SimpleSolution([]))
             update_instance_some_routes!(instance, [newroute], "delete", false)
             update_instance_some_routes!(instance, [route1, route2], "add", false)
             if feasible
@@ -81,7 +90,7 @@ function find_best_merge_multiday(instance::Instance, d::Int)
     routes = [route for route in list_routes_depot(instance.solution, d)]
     R = length(routes)
     Δ = fill(Inf, R, R)
-    for r1 = 1:R, r2 = 1:r1-1
+    for r1 in 1:R, r2 in 1:(r1 - 1)
         route1, route2 = routes[r1], routes[r2]
         Δ[r1, r2] = gain_merge_multiday(route1, route2, instance)
     end
@@ -108,10 +117,7 @@ are included (either in the greedy initialization heuristic if `false`
 or the neighborhood of the LNS if `true`).
 """
 function perform_best_merge_multiday!(
-    instance::Instance,
-    d::Int;
-    stats::Dict = nothing,
-    in_LNS::Bool = true,
+    instance::Instance, d::Int; stats::Dict=nothing, in_LNS::Bool=true
 )
     Δ, route1, route2 = find_best_merge_multiday(instance, d)
     if Δ < -0.5
@@ -141,14 +147,12 @@ are included (either in the greedy initialization heuristic if `false`
 or the neighborhood of the LNS if `true`).
 """
 function iterative_merge_multiday!(
-    instance::Instance,
-    d::Int;
-    stats::Dict = nothing,
-    in_LNS::Bool = true,
+    instance::Instance, d::Int; stats::Dict=nothing, in_LNS::Bool=true
 )
     while true
-        improvement_found =
-            perform_best_merge_multiday!(instance, d, stats = stats, in_LNS = in_LNS)
+        improvement_found = perform_best_merge_multiday!(
+            instance, d; stats=stats, in_LNS=in_LNS
+        )
         if !improvement_found
             break
         end
@@ -169,13 +173,10 @@ are included (either in the greedy initialization heuristic if `false`
 or the neighborhood of the LNS if `true`).
 """
 function iterative_merge_multiday!(
-    instance::Instance,
-    verbose::Bool = false;
-    stats::Dict = nothing,
-    in_LNS::Bool = true,
+    instance::Instance, verbose::Bool=false; stats::Dict=nothing, in_LNS::Bool=true
 )
-    @showprogress "Greedy merge of routes over days " for d = 1:instance.D
-        iterative_merge_multiday!(instance, d, stats = stats, in_LNS = in_LNS)
+    @showprogress "Greedy merge of routes over days " for d in 1:(instance.D)
+        iterative_merge_multiday!(instance, d; stats=stats, in_LNS=in_LNS)
     end
-    verbose && println("Cost after multiday merge : ", compute_cost(instance))
+    return verbose && println("Cost after multiday merge : ", compute_cost(instance))
 end

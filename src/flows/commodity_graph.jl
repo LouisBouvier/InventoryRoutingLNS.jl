@@ -15,22 +15,22 @@ These artificial nodes are used to build a flow problem.
     a large neighborhood MILP with [`fill_fixed_routes_MILP`](@ref).
 """
 function add_artificial_nodes_CFG!(fg::FlowGraph; refill_neighborhood::Bool)
-    add_vertex!(fg, FGN(str = "source"))
+    add_vertex!(fg, FGN(; str="source"))
 
-    add_vertex!(fg, FGN(str = "production"))
-    add_vertex!(fg, FGN(str = "initial_inventory"))
-    add_vertex!(fg, FGN(str = "shortage_compensation"))
+    add_vertex!(fg, FGN(; str="production"))
+    add_vertex!(fg, FGN(; str="initial_inventory"))
+    add_vertex!(fg, FGN(; str="shortage_compensation"))
     if refill_neighborhood
-        add_vertex!(fg, FGN(str = "other_received_quantities"))
+        add_vertex!(fg, FGN(; str="other_received_quantities"))
     end
 
-    add_vertex!(fg, FGN(str = "demand"))
+    add_vertex!(fg, FGN(; str="demand"))
     if refill_neighborhood
-        add_vertex!(fg, FGN(str = "other_sent_quantities"))
+        add_vertex!(fg, FGN(; str="other_sent_quantities"))
     end
-    add_vertex!(fg, FGN(str = "final_inventory"))
+    add_vertex!(fg, FGN(; str="final_inventory"))
 
-    add_vertex!(fg, FGN(str = "sink"))
+    return add_vertex!(fg, FGN(; str="sink"))
 end
 
 """
@@ -59,37 +59,36 @@ function add_every_day_nodes_CFG!(
     list_customers::AbstractVector{Int},
     S_max::Int,
 )
-
     T = instance.T
     nb_transport_hours_per_day = instance.nb_transport_hours_per_day
     # Nodes for each day
-    for t = 1:T
+    for t in 1:T
         # Depots
         for d in list_depots
-            add_vertex!(fg, FGN(t = t, d = d, str = "morning"))
-            add_vertex!(fg, FGN(t = t, d = d, str = "evening"))
-            add_vertex!(fg, FGN(t = t, d = d, str = "free_night"))
+            add_vertex!(fg, FGN(; t=t, d=d, str="morning"))
+            add_vertex!(fg, FGN(; t=t, d=d, str="evening"))
+            add_vertex!(fg, FGN(; t=t, d=d, str="free_night"))
         end
         # Customers
         for c in list_customers
-            add_vertex!(fg, FGN(t = t, c = c, str = "morning"))
+            add_vertex!(fg, FGN(; t=t, c=c, str="morning"))
             if S_max == 1
-                add_vertex!(fg, FGN(t = t, c = c, s = 1, str = "noon"))
+                add_vertex!(fg, FGN(; t=t, c=c, s=1, str="noon"))
             else
-                for s = 1:S_max, t_h = 0:(nb_transport_hours_per_day-1)
-                    add_vertex!(fg, FGN(t = t, t_h = t_h, c = c, s = s, str = "noon"))
+                for s in 1:S_max, t_h in 0:(nb_transport_hours_per_day - 1)
+                    add_vertex!(fg, FGN(; t=t, t_h=t_h, c=c, s=s, str="noon"))
                 end
             end
-            add_vertex!(fg, FGN(t = t, c = c, str = "evening"))
-            add_vertex!(fg, FGN(t = t, c = c, str = "free_night"))
+            add_vertex!(fg, FGN(; t=t, c=c, str="evening"))
+            add_vertex!(fg, FGN(; t=t, c=c, str="free_night"))
         end
     end
     # Nodes of the last day
     for d in list_depots
-        add_vertex!(fg, FGN(t = T + 1, d = d, str = "morning"))
+        add_vertex!(fg, FGN(; t=T + 1, d=d, str="morning"))
     end
     for c in list_customers
-        add_vertex!(fg, FGN(t = T + 1, c = c, str = "morning"))
+        add_vertex!(fg, FGN(; t=T + 1, c=c, str="morning"))
     end
 end
 
@@ -118,29 +117,29 @@ function add_initial_final_inventory_arcs_CFG!(
     T = instance.T
     # Initial inventory depots
     for d in list_depots
-        n1 = FGN(str = "initial_inventory")
-        n2 = FGN(t = 1, d = d, str = "morning")
+        n1 = FGN(; str="initial_inventory")
+        n2 = FGN(; t=1, d=d, str="morning")
         add_edge!(fg, n1, n2)
         set_value!(fg, ne(fg), instance.depots[d].initial_inventory[commodity_index])
     end
     # Initial inventory customers
     for c in list_customers
-        n1 = FGN(str = "initial_inventory")
-        n2 = FGN(t = 1, c = c, str = "morning")
+        n1 = FGN(; str="initial_inventory")
+        n2 = FGN(; t=1, c=c, str="morning")
         add_edge!(fg, n1, n2)
         set_value!(fg, ne(fg), instance.customers[c].initial_inventory[commodity_index])
     end
 
     # Final inventory depots
     for d in list_depots
-        n1 = FGN(t = T + 1, d = d, str = "morning")
-        n2 = FGN(str = "final_inventory")
+        n1 = FGN(; t=T + 1, d=d, str="morning")
+        n2 = FGN(; str="final_inventory")
         add_edge!(fg, n1, n2)
     end
     # Final inventory customers
     for c in list_customers
-        n1 = FGN(t = T + 1, c = c, str = "morning")
-        n2 = FGN(str = "final_inventory")
+        n1 = FGN(; t=T + 1, c=c, str="morning")
+        n2 = FGN(; str="final_inventory")
         add_edge!(fg, n1, n2)
     end
 end
@@ -170,17 +169,17 @@ function add_production_arcs_depots_CFG!(
 )
     T = instance.T
     # Production depots
-    for t = 1:T, d in list_depots
-        n1 = FGN(str = "production")
-        n2 = FGN(t = t, d = d, str = "morning")
+    for t in 1:T, d in list_depots
+        n1 = FGN(; str="production")
+        n2 = FGN(; t=t, d=d, str="morning")
         add_edge!(fg, n1, n2)
         set_value!(fg, ne(fg), instance.depots[d].production[commodity_index, t])
     end
     # Other sent quantities if in large neighborhood
     if refill_neighborhood
-        for t = 1:T, d in list_depots
-            n1 = FGN(t = t, d = d, str = "morning")
-            n2 = FGN(str = "other_sent_quantities")
+        for t in 1:T, d in list_depots
+            n1 = FGN(; t=t, d=d, str="morning")
+            n2 = FGN(; str="other_sent_quantities")
             add_edge!(fg, n1, n2)
             set_value!(fg, ne(fg), instance.depots[d].quantity_sent[commodity_index, t])
         end
@@ -213,26 +212,28 @@ function add_shortage_demand_arcs_customer_CFG!(
 )
     T = instance.T
     # Shortage customers
-    for t = 1:T, c in list_customers
-        n1 = FGN(str = "shortage_compensation")
-        n2 = FGN(t = t, c = c, str = "morning")
+    for t in 1:T, c in list_customers
+        n1 = FGN(; str="shortage_compensation")
+        n2 = FGN(; t=t, c=c, str="morning")
         add_edge!(fg, n1, n2)
         set_cost!(fg, ne(fg), instance.customers[c].shortage_cost[commodity_index])
     end
     # Demand customers
-    for t = 1:T, c in list_customers
-        n1 = FGN(t = t, c = c, str = "morning")
-        n2 = FGN(str = "demand")
+    for t in 1:T, c in list_customers
+        n1 = FGN(; t=t, c=c, str="morning")
+        n2 = FGN(; str="demand")
         add_edge!(fg, n1, n2)
         set_value!(fg, ne(fg), instance.customers[c].demand[commodity_index, t])
     end
     # Other received quantities if in neighborhood
     if refill_neighborhood
-        for t = 1:T, c in list_customers
-            n1 = FGN(str = "other_received_quantities")
-            n2 = FGN(t = t, c = c, str = "evening")
+        for t in 1:T, c in list_customers
+            n1 = FGN(; str="other_received_quantities")
+            n2 = FGN(; t=t, c=c, str="evening")
             add_edge!(fg, n1, n2)
-            set_value!(fg, ne(fg), instance.customers[c].quantity_received[commodity_index, t])
+            set_value!(
+                fg, ne(fg), instance.customers[c].quantity_received[commodity_index, t]
+            )
         end
     end
 end
@@ -259,24 +260,23 @@ function add_depots_inventory_arcs_CFG!(
     commodity_index::Int,
     list_depots::AbstractVector{Int},
 )
-
     T = instance.T
-    for t = 1:T, d in list_depots
-        n1 = FGN(t = t, d = d, str = "morning")
-        n2 = FGN(t = t, d = d, str = "evening")
+    for t in 1:T, d in list_depots
+        n1 = FGN(; t=t, d=d, str="morning")
+        n2 = FGN(; t=t, d=d, str="evening")
         add_edge!(fg, n1, n2)
 
-        n1 = FGN(t = t, d = d, str = "evening")
-        n2 = FGN(t = t, d = d, str = "free_night")
+        n1 = FGN(; t=t, d=d, str="evening")
+        n2 = FGN(; t=t, d=d, str="free_night")
         add_edge!(fg, n1, n2)
 
-        n1 = FGN(t = t, d = d, str = "evening")
-        n2 = FGN(t = t + 1, d = d, str = "morning")
+        n1 = FGN(; t=t, d=d, str="evening")
+        n2 = FGN(; t=t + 1, d=d, str="morning")
         add_edge!(fg, n1, n2)
         set_cost!(fg, ne(fg), instance.depots[d].excess_inventory_cost[commodity_index])
 
-        n1 = FGN(t = t, d = d, str = "free_night")
-        n2 = FGN(t = t + 1, d = d, str = "morning")
+        n1 = FGN(; t=t, d=d, str="free_night")
+        n2 = FGN(; t=t + 1, d=d, str="morning")
         add_edge!(fg, n1, n2)
         set_capa_max!(fg, ne(fg), instance.depots[d].maximum_inventory[commodity_index, t])
     end
@@ -311,39 +311,37 @@ function add_customer_inventory_arcs_CFG!(
     T = instance.T
     nb_transport_hours_per_day = instance.nb_transport_hours_per_day
 
-    for t = 1:T, c in list_customers
-        n1 = FGN(t = t, c = c, str = "morning")
-        n2 = FGN(t = t, c = c, str = "evening")
+    for t in 1:T, c in list_customers
+        n1 = FGN(; t=t, c=c, str="morning")
+        n2 = FGN(; t=t, c=c, str="evening")
         add_edge!(fg, n1, n2)
 
         if S_max == 1
-            n1 = FGN(t = t, c = c, s = 1, str = "noon")
-            n2 = FGN(t = t, c = c, str = "evening")
+            n1 = FGN(; t=t, c=c, s=1, str="noon")
+            n2 = FGN(; t=t, c=c, str="evening")
             add_edge!(fg, n1, n2)
         else
-            for s = 1:S_max, t_h = 0:(nb_transport_hours_per_day-1)
-                n1 = FGN(t = t, t_h = t_h, c = c, s = s, str = "noon")
-                n2 = FGN(t = t, c = c, str = "evening")
+            for s in 1:S_max, t_h in 0:(nb_transport_hours_per_day - 1)
+                n1 = FGN(; t=t, t_h=t_h, c=c, s=s, str="noon")
+                n2 = FGN(; t=t, c=c, str="evening")
                 add_edge!(fg, n1, n2)
             end
         end
 
-        n1 = FGN(t = t, c = c, str = "evening")
-        n2 = FGN(t = t, c = c, str = "free_night")
+        n1 = FGN(; t=t, c=c, str="evening")
+        n2 = FGN(; t=t, c=c, str="free_night")
         add_edge!(fg, n1, n2)
 
-        n1 = FGN(t = t, c = c, str = "evening")
-        n2 = FGN(t = t + 1, c = c, str = "morning")
+        n1 = FGN(; t=t, c=c, str="evening")
+        n2 = FGN(; t=t + 1, c=c, str="morning")
         add_edge!(fg, n1, n2)
         set_cost!(fg, ne(fg), instance.customers[c].excess_inventory_cost[commodity_index])
 
-        n1 = FGN(t = t, c = c, str = "free_night")
-        n2 = FGN(t = t + 1, c = c, str = "morning")
+        n1 = FGN(; t=t, c=c, str="free_night")
+        n2 = FGN(; t=t + 1, c=c, str="morning")
         add_edge!(fg, n1, n2)
         set_capa_max!(
-            fg,
-            ne(fg),
-            instance.customers[c].maximum_inventory[commodity_index, t],
+            fg, ne(fg), instance.customers[c].maximum_inventory[commodity_index, t]
         )
     end
 end
@@ -410,7 +408,6 @@ function add_new_routes_arcs_CFG!(
     possible_delays::Dict,
     add_delayed_arcs::Bool,
 )
-
     M, T, D = instance.M, instance.T, instance.D
     vehicle_cost = instance.vehicle_cost
     vehicle_capacity = instance.vehicle_capacity
@@ -419,30 +416,32 @@ function add_new_routes_arcs_CFG!(
     dist = instance.dist
     transport_durations = instance.transport_durations
     nb_transport_hours_per_day = instance.nb_transport_hours_per_day
-    l = [instance.commodities[m].l for m = 1:M]
+    l = [instance.commodities[m].l for m in 1:M]
 
     ## first case: only direct routes
     if S_max == 1
         # Trip
-        for t = 1:T
+        for t in 1:T
             # d=>c
             for d in list_depots, c in list_customers
                 if add_delayed_arcs
                     delayed_days = possible_delays[d][c]
                 else
-                    delayed_days = [floor(transport_durations[d,D+c]/nb_transport_hours_per_day)]
+                    delayed_days = [
+                        floor(transport_durations[d, D + c] / nb_transport_hours_per_day)
+                    ]
                 end
                 for delay in delayed_days
                     arrival_day = t + delay
                     if arrival_day <= T
-                        n1 = FGN(t = t, d = d, str = "morning")
-                        n2 = FGN(t = arrival_day, c = c, s = 1, str = "noon")
+                        n1 = FGN(; t=t, d=d, str="morning")
+                        n2 = FGN(; t=arrival_day, c=c, s=1, str="noon")
                         add_edge!(fg, n1, n2)
                         if set_upper_capa
                             depot = instance.depots[d]
                             capa_max_dc =
                                 sum(depot.production[commodity_index, 1:t]) +
-                             depot.initial_inventory[commodity_index]
+                                depot.initial_inventory[commodity_index]
                             set_capa_max!(fg, ne(fg), capa_max_dc)
                         end
                         if relaxed_trip_cost
@@ -459,8 +458,11 @@ function add_new_routes_arcs_CFG!(
                             set_cost!(
                                 fg,
                                 ne(fg),
-                                (vehicle_cost + stop_cost + km_cost * dist[n1.d, D+n2.c]) *
-                                l[commodity_index] / capacity,
+                                (
+                                    vehicle_cost +
+                                    stop_cost +
+                                    km_cost * dist[n1.d, D + n2.c]
+                                ) * l[commodity_index] / capacity,
                             )
                             if force_routes_values
                                 set_value!(
@@ -474,19 +476,19 @@ function add_new_routes_arcs_CFG!(
                 end
             end
         end
-    ## second case: consider a succession of customers, need to take hours into account
+        ## second case: consider a succession of customers, need to take hours into account
     else
         # Trip
-        for t = 1:T
+        for t in 1:T
             # d=>c
             for d in list_depots, c in list_customers
-                transport_hours = transport_durations[d,D+c]
+                transport_hours = transport_durations[d, D + c]
                 delta_days = floor(transport_hours / nb_transport_hours_per_day)
                 arrival_day = t + delta_days
-                arrival_hour = transport_hours - nb_transport_hours_per_day*delta_days
+                arrival_hour = transport_hours - nb_transport_hours_per_day * delta_days
                 if arrival_day <= T
-                    n1 = FGN(t = t, d = d, str = "morning")
-                    n2 = FGN(t = arrival_day, t_h = arrival_hour, c = c, s = 1, str = "noon")
+                    n1 = FGN(; t=t, d=d, str="morning")
+                    n2 = FGN(; t=arrival_day, t_h=arrival_hour, c=c, s=1, str="noon")
                     add_edge!(fg, n1, n2)
                     if set_upper_capa
                         depot = instance.depots[d]
@@ -509,7 +511,7 @@ function add_new_routes_arcs_CFG!(
                         set_cost!(
                             fg,
                             ne(fg),
-                            (vehicle_cost + stop_cost + km_cost * dist[n1.d, D+n2.c]) *
+                            (vehicle_cost + stop_cost + km_cost * dist[n1.d, D + n2.c]) *
                             l[commodity_index] / capacity,
                         )
                         if force_routes_values
@@ -523,18 +525,28 @@ function add_new_routes_arcs_CFG!(
                 end
             end
             # c1=>c2
-            for s = 1:S_max-1, c1 in list_customers, c2 in list_customers, departure_hour = 0:(nb_transport_hours_per_day-1)
-                n1 = FGN(t = t, t_h = departure_hour, c = c1, s = s, str = "noon")
+            for s in 1:(S_max - 1),
+                c1 in list_customers,
+                c2 in list_customers,
+                departure_hour in 0:(nb_transport_hours_per_day - 1)
+
+                n1 = FGN(; t=t, t_h=departure_hour, c=c1, s=s, str="noon")
                 vertex_index_n1 = get_vertexindex(fg, n1)
                 inneighbors_n1 = Graphs.inneighbors(fg, vertex_index_n1)
-                if dist[D+c1, D+c2] <= maxdist && length(inneighbors_n1) > 0
+                if dist[D + c1, D + c2] <= maxdist && length(inneighbors_n1) > 0
                     ## not exactly the relaxation here
-                    transport_hours = transport_durations[D+c1, D+c2]
-                    delta_days = floor((transport_hours + departure_hour)/ nb_transport_hours_per_day)
+                    transport_hours = transport_durations[D + c1, D + c2]
+                    delta_days = floor(
+                        (transport_hours + departure_hour) / nb_transport_hours_per_day
+                    )
                     arrival_day = t + delta_days
-                    arrival_hour = (departure_hour + transport_hours) - nb_transport_hours_per_day*delta_days
+                    arrival_hour =
+                        (departure_hour + transport_hours) -
+                        nb_transport_hours_per_day * delta_days
                     if arrival_day <= T
-                        n2 = FGN(t = arrival_day, t_h = arrival_hour , c = c2, s = (s + 1), str = "noon")
+                        n2 = FGN(;
+                            t=arrival_day, t_h=arrival_hour, c=c2, s=(s + 1), str="noon"
+                        )
                         add_edge!(fg, n1, n2)
                         if relaxed_trip_cost
                             if average_content_sizes !== nothing
@@ -550,7 +562,7 @@ function add_new_routes_arcs_CFG!(
                             set_cost!(
                                 fg,
                                 ne(fg),
-                                (stop_cost + km_cost * dist[D+c1, D+c2]) *
+                                (stop_cost + km_cost * dist[D + c1, D + c2]) *
                                 l[commodity_index] / capacity,
                             )
                         end
@@ -577,16 +589,17 @@ to those paths, and connect them to the starting depots and to the
 evening of the customers visited. 
 It is particularly useful in [`fill_fixed_routes_MILP`](@ref).
 """
-function add_fixed_routes_arcs_CFG!(fg::FlowGraph;
-                                    instance::Instance,
-                                    fixed_routes::Vector{Route},
-                                    commodity_index::Int,
-                                    force_routes_values::Bool,
+function add_fixed_routes_arcs_CFG!(
+    fg::FlowGraph;
+    instance::Instance,
+    fixed_routes::Vector{Route},
+    commodity_index::Int,
+    force_routes_values::Bool,
 )
     ## Get dimensions
     D, C, T, M = instance.D, instance.C, instance.T, instance.M
     vehicle_capacity = instance.vehicle_capacity
-    l = [instance.commodities[m].l for m = 1:M]
+    l = [instance.commodities[m].l for m in 1:M]
     concerned_depots = select_relevant_depots(instance, commodity_index)
     concerned_customers = select_relevant_customers(instance, commodity_index)
 
@@ -599,13 +612,13 @@ function add_fixed_routes_arcs_CFG!(fg::FlowGraph;
         for (s, stop) in enumerate(route.stops)
             arrival_date = stop.t
             c = stop.c
-            add_vertex!(fg, FGN(t = arrival_date, c = c, s = s, str = "noon_route_$r"))
+            add_vertex!(fg, FGN(; t=arrival_date, c=c, s=s, str="noon_route_$r"))
         end
 
         # add arcs
         # d => c
-        n1 = FGN(t = t, d = d, str = "morning")
-        n2 = FGN(t = route.stops[1].t, c = route.stops[1].c, s = 1, str = "noon_route_$r")
+        n1 = FGN(; t=t, d=d, str="morning")
+        n2 = FGN(; t=route.stops[1].t, c=route.stops[1].c, s=1, str="noon_route_$r")
         add_edge!(fg, n1, n2)
 
         # in case the depot is not concerned by the commodity
@@ -614,16 +627,21 @@ function add_fixed_routes_arcs_CFG!(fg::FlowGraph;
         end
 
         # c1 => c2
-        for s = 1:(length(route.stops)-1)
-            n1 = FGN(t = route.stops[s].t, c = route.stops[s].c, s = s, str = "noon_route_$r")
-            n2 = FGN(t = route.stops[s+1].t, c = route.stops[s+1].c, s = (s + 1), str = "noon_route_$r")
+        for s in 1:(length(route.stops) - 1)
+            n1 = FGN(; t=route.stops[s].t, c=route.stops[s].c, s=s, str="noon_route_$r")
+            n2 = FGN(;
+                t=route.stops[s + 1].t,
+                c=route.stops[s + 1].c,
+                s=(s + 1),
+                str="noon_route_$r",
+            )
             add_edge!(fg, n1, n2)
         end
 
         # c_noon => c_evening
-        for s = 1:length(route.stops)
-            n1 = FGN(t = route.stops[s].t, c = route.stops[s].c, s = s, str = "noon_route_$r")
-            n2 = FGN(t = route.stops[s].t, c = route.stops[s].c, str = "evening")
+        for s in 1:length(route.stops)
+            n1 = FGN(; t=route.stops[s].t, c=route.stops[s].c, s=s, str="noon_route_$r")
+            n2 = FGN(; t=route.stops[s].t, c=route.stops[s].c, str="evening")
             add_edge!(fg, n1, n2)
             if concerned_customers[route.stops[s].c] == 0
                 set_value!(fg, ne(fg), 0)
@@ -641,20 +659,20 @@ end
 Add the arcs between artificial nodes to create the circulation.
 """
 function add_cycle_arcs_CFG!(fg::FlowGraph, refill_neighborhood::Bool)
-    add_edge!(fg, FGN(str = "source"), FGN(str = "initial_inventory"))
-    add_edge!(fg, FGN(str = "source"), FGN(str = "production"))
-    add_edge!(fg, FGN(str = "source"), FGN(str = "shortage_compensation"))
+    add_edge!(fg, FGN(; str="source"), FGN(; str="initial_inventory"))
+    add_edge!(fg, FGN(; str="source"), FGN(; str="production"))
+    add_edge!(fg, FGN(; str="source"), FGN(; str="shortage_compensation"))
     if refill_neighborhood
-        add_edge!(fg, FGN(str = "source"), FGN(str = "other_received_quantities"))
+        add_edge!(fg, FGN(; str="source"), FGN(; str="other_received_quantities"))
     end
 
-    add_edge!(fg, FGN(str = "final_inventory"), FGN(str = "sink"))
-    add_edge!(fg, FGN(str = "demand"), FGN(str = "sink"))
+    add_edge!(fg, FGN(; str="final_inventory"), FGN(; str="sink"))
+    add_edge!(fg, FGN(; str="demand"), FGN(; str="sink"))
     if refill_neighborhood
-        add_edge!(fg, FGN(str = "other_sent_quantities"), FGN(str = "sink"))
+        add_edge!(fg, FGN(; str="other_sent_quantities"), FGN(; str="sink"))
     end
 
-    add_edge!(fg, FGN(str = "sink"), FGN(str = "source"))
+    return add_edge!(fg, FGN(; str="sink"), FGN(; str="source"))
 end
 
 """
@@ -726,27 +744,27 @@ In this case we provide the `fixed_routes` to add in [`add_fixed_routes_arcs_CFG
 function commodity_flow_graph(
     instance::Instance;
     commodity_index::Int,
-    add_new_routes_arcs::Bool = true,
-    S_max::Int = 1,
-    maxdist::Real = Inf,
-    relaxed_trip_cost::Bool = true,
-    average_content_sizes::Union{Nothing,AverageContentSizes} = nothing,
-    force_routes_values::Bool = false,
-    sent_quantities_to_force::Array = zeros(1),
-    sparsify::Bool = true,
-    set_upper_capa::Bool = false,
-    possible_delays::Dict = Dict(),
-    add_delayed_arcs::Bool = false,
-    fixed_routes::Union{Nothing, Vector{Route}} = nothing,
-    refill_neighborhood::Bool = false,
+    add_new_routes_arcs::Bool=true,
+    S_max::Int=1,
+    maxdist::Real=Inf,
+    relaxed_trip_cost::Bool=true,
+    average_content_sizes::Union{Nothing,AverageContentSizes}=nothing,
+    force_routes_values::Bool=false,
+    sent_quantities_to_force::Array=zeros(1),
+    sparsify::Bool=true,
+    set_upper_capa::Bool=false,
+    possible_delays::Dict=Dict(),
+    add_delayed_arcs::Bool=false,
+    fixed_routes::Union{Nothing,Vector{Route}}=nothing,
+    refill_neighborhood::Bool=false,
 )
     D, C = instance.D, instance.C
 
     if S_max == 1 && sparsify && add_new_routes_arcs
         concerned_depots = select_relevant_depots(instance, commodity_index)
-        list_depots = [d for d = 1:D if concerned_depots[d] == 1]
+        list_depots = [d for d in 1:D if concerned_depots[d] == 1]
         concerned_customers = select_relevant_customers(instance, commodity_index)
-        list_customers = [c for c = 1:C if concerned_customers[c] == 1]
+        list_customers = [c for c in 1:C if concerned_customers[c] == 1]
 
     elseif !isnothing(fixed_routes) && sparsify
         list_depots = unique([route.d for route in fixed_routes])
@@ -768,82 +786,80 @@ function commodity_flow_graph(
     ## Nodes
 
     # Artificial nodes
-    add_artificial_nodes_CFG!(fg, refill_neighborhood = refill_neighborhood)
+    add_artificial_nodes_CFG!(fg; refill_neighborhood=refill_neighborhood)
     # Nodes for each day
     add_every_day_nodes_CFG!(
-        fg,
-        instance = instance,
-        list_depots = list_depots,
-        list_customers = list_customers,
-        S_max = S_max,
+        fg;
+        instance=instance,
+        list_depots=list_depots,
+        list_customers=list_customers,
+        S_max=S_max,
     )
 
     ## Arcs
 
     # Initial and final inventory
     add_initial_final_inventory_arcs_CFG!(
-        fg,
-        instance = instance,
-        commodity_index = commodity_index,
-        list_depots = list_depots,
-        list_customers = list_customers,
+        fg;
+        instance=instance,
+        commodity_index=commodity_index,
+        list_depots=list_depots,
+        list_customers=list_customers,
     )
     # Production depots
     add_production_arcs_depots_CFG!(
-        fg,
-        instance = instance,
-        commodity_index = commodity_index,
-        list_depots = list_depots,
-        refill_neighborhood = refill_neighborhood,
+        fg;
+        instance=instance,
+        commodity_index=commodity_index,
+        list_depots=list_depots,
+        refill_neighborhood=refill_neighborhood,
     )
     # Shortage and demand customers
     add_shortage_demand_arcs_customer_CFG!(
-        fg,
-        instance = instance,
-        commodity_index = commodity_index,
-        list_customers = list_customers,
-        refill_neighborhood = refill_neighborhood,
+        fg;
+        instance=instance,
+        commodity_index=commodity_index,
+        list_customers=list_customers,
+        refill_neighborhood=refill_neighborhood,
     )
     # Inventory depots
     add_depots_inventory_arcs_CFG!(
-        fg,
-        instance = instance,
-        commodity_index = commodity_index,
-        list_depots = list_depots,
+        fg; instance=instance, commodity_index=commodity_index, list_depots=list_depots
     )
     # Inventory customers
     add_customer_inventory_arcs_CFG!(
-        fg,
-        instance = instance,
-        commodity_index = commodity_index,
-        list_customers = list_customers,
-        S_max = S_max,
+        fg;
+        instance=instance,
+        commodity_index=commodity_index,
+        list_customers=list_customers,
+        S_max=S_max,
     )
     # Trips
     if add_new_routes_arcs
         add_new_routes_arcs_CFG!(
-            fg,
-            instance = instance,
-            list_depots = list_depots,
-            list_customers = list_customers,
-            commodity_index = commodity_index,
-            relaxed_trip_cost = relaxed_trip_cost,
-            maxdist = maxdist,
-            average_content_sizes = average_content_sizes,
-            S_max = S_max,
-            force_routes_values = force_routes_values,
-            sent_quantities_to_force = sent_quantities_to_force,
-            set_upper_capa = set_upper_capa,
-            possible_delays = possible_delays,
-            add_delayed_arcs = add_delayed_arcs,
+            fg;
+            instance=instance,
+            list_depots=list_depots,
+            list_customers=list_customers,
+            commodity_index=commodity_index,
+            relaxed_trip_cost=relaxed_trip_cost,
+            maxdist=maxdist,
+            average_content_sizes=average_content_sizes,
+            S_max=S_max,
+            force_routes_values=force_routes_values,
+            sent_quantities_to_force=sent_quantities_to_force,
+            set_upper_capa=set_upper_capa,
+            possible_delays=possible_delays,
+            add_delayed_arcs=add_delayed_arcs,
         )
     end
     if !isnothing(fixed_routes)
-        add_fixed_routes_arcs_CFG!(fg;
-                                    instance = instance,
-                                    fixed_routes = fixed_routes,
-                                    commodity_index = commodity_index,
-                                    force_routes_values = force_routes_values,
+        add_fixed_routes_arcs_CFG!(
+            fg;
+            instance=instance,
+            fixed_routes=fixed_routes,
+            commodity_index=commodity_index,
+            force_routes_values=force_routes_values,
         )
     end
     # Cycle

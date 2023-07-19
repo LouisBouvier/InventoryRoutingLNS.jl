@@ -9,7 +9,7 @@ per day `nb_transport_hours_per_day`, as well as the transport duration for each
 site-to-site travel in `transport_durations`. We can therefore follow the path of 
 `route` and check if the dates and transport durations are coherent. 
 """
-function delays_coherent(route::Route, instance::Instance; verbose::Bool = false)
+function delays_coherent(route::Route, instance::Instance; verbose::Bool=false)
     transport_durations = instance.transport_durations
     nb_transport_hours_per_day = instance.nb_transport_hours_per_day
     D = instance.D
@@ -18,15 +18,18 @@ function delays_coherent(route::Route, instance::Instance; verbose::Bool = false
     customer_index = route.stops[1].c + D
     cumulated_duration = transport_durations[depot_index, customer_index]
     if route.t + floor(cumulated_duration / nb_transport_hours_per_day) != route.stops[1].t
-        verbose && @info "Route $(route.id) has arrival time incoherent with delays for stop 1"
+        verbose &&
+            @info "Route $(route.id) has arrival time incoherent with delays for stop 1"
         return false
     end
-    for s = 1:(nb_stops_route-1)
+    for s in 1:(nb_stops_route - 1)
         customer1_index = route.stops[s].c + D
-        customer2_index = route.stops[s+1].c + D
+        customer2_index = route.stops[s + 1].c + D
         cumulated_duration += transport_durations[customer1_index, customer2_index]
-        if route.t + floor(cumulated_duration / nb_transport_hours_per_day) != route.stops[s+1].t
-            verbose && @info "Route $(route.id) has arrival time incoherent with delays for stop $(s+1)"
+        if route.t + floor(cumulated_duration / nb_transport_hours_per_day) !=
+            route.stops[s + 1].t
+            verbose &&
+                @info "Route $(route.id) has arrival time incoherent with delays for stop $(s+1)"
             return false
         end
     end
@@ -44,17 +47,19 @@ A route is feasible if each of the following conditions is respected:
 - the arrival date to the last stop is before the horizon `T`.
 - the dates of arrival in the stops are coherent with transport durations.
 """
-function feasibility(route::Route, instance::Instance; verbose::Bool = false)
+function feasibility(route::Route, instance::Instance; verbose::Bool=false)
     if !(1 <= length(route.stops) <= instance.S_max)
         verbose && @info "Route $(route.id) is too long"
         return false
     elseif content_size(route, instance) > instance.vehicle_capacity
         verbose && @info "Route $(route.id) has too much content"
         return false
-    elseif route.t + floor(compute_route_duration(route, instance) / instance.nb_transport_hours_per_day) > instance.T
+    elseif route.t + floor(
+        compute_route_duration(route, instance) / instance.nb_transport_hours_per_day
+    ) > instance.T
         verbose && @info "Route $(route.id) arrives after the horizon"
         return false
-    elseif !delays_coherent(route, instance; verbose = verbose)
+    elseif !delays_coherent(route, instance; verbose=verbose)
         return false
     else
         return true
@@ -72,7 +77,7 @@ Before applying this check, the `instance` and stored `solution` must be coheren
 This can be made manually, or using [`update_instance_from_solution!`](@ref).
 We then check if the depot inventory is nonnegative on each day for each commodity.
 """
-function feasibility(depot::Depot; verbose::Bool = false)
+function feasibility(depot::Depot; verbose::Bool=false)
     if !positive_inventory(depot)
         verbose && @info "Depot $(depot.d) has negative inventory"
         return false
@@ -90,7 +95,7 @@ This check is implicitly done by [`feasibility`](@ref) but faster to compute, we
 do not include it in the feasibility function of a depot, but instead call it when the whole 
 feasibility check is not necessary, see [`insert_multi_depot!`](@ref) for instance. 
 """
-function stop_depot_not_compatible(depot::Depot, stop::RouteStop; verbose::Bool = false)
+function stop_depot_not_compatible(depot::Depot, stop::RouteStop; verbose::Bool=false)
     return any((stop.Q .> 0) .* .!(depot.commodity_used))
 end
 
@@ -108,7 +113,7 @@ Two conditions have to be verified:
 Remark: the second condition is necessary to avoid sending commdodities 
 to customers that do not need them to lower the excess inventory costs at the depots. 
 """
-function feasibility(customer::Customer; verbose::Bool = false)
+function feasibility(customer::Customer; verbose::Bool=false)
     if !positive_inventory(customer)
         verbose && @info "Customer $(customer.c) has negative inventory"
         return false
@@ -141,23 +146,23 @@ updated using [`update_instance_some_routes!`](@ref).
 """
 function feasibility(
     instance::Instance;
-    ds::Vector{Int} = collect(1:instance.D),
-    cs::Vector{Int} = collect(1:instance.C),
-    solution::Solution = instance.solution,
-    verbose::Bool = false,
+    ds::Vector{Int}=collect(1:(instance.D)),
+    cs::Vector{Int}=collect(1:(instance.C)),
+    solution::Solution=instance.solution,
+    verbose::Bool=false,
 )
     for route in list_routes(solution)
-        if !feasibility(route, instance, verbose = verbose)
+        if !feasibility(route, instance; verbose=verbose)
             return false
         end
     end
     for depot in instance.depots[ds]
-        if !feasibility(depot, verbose = verbose)
+        if !feasibility(depot; verbose=verbose)
             return false
         end
     end
     for customer in instance.customers[cs]
-        if !feasibility(customer, verbose = verbose)
+        if !feasibility(customer; verbose=verbose)
             return false
         end
     end

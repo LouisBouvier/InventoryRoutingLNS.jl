@@ -17,5 +17,5 @@ function Base.show(io::IO, solution::Solution)
     routes = list_routes(solution)
     R = length(routes)
     str = "IRP solution with $R route(s)"
-    println(io, str)
+    return println(io, str)
 end

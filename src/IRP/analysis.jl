@@ -26,12 +26,13 @@ the [`modified_capa_initialization_plus_ls!`](@ref) to estimate the flow arcs' c
 function compute_average_content_size_depot(instance::Instance)
     D = instance.D
     avg_l = Vector{Float64}(undef, D)
-    for d = 1:D
+    for d in 1:D
         depot_routes = list_routes_depot(instance.solution, d)
         nb_routes = length(depot_routes)
         if nb_routes > 0
-            avg_l[d] =
-                (sum(content_size(route, instance) for route in depot_routes) / nb_routes)
+            avg_l[d] = (
+                sum(content_size(route, instance) for route in depot_routes) / nb_routes
+            )
         else
             avg_l[d] = instance.vehicle_capacity
         end
@@ -50,7 +51,7 @@ the [`modified_capa_initialization_plus_ls!`](@ref) to estimate the flow arcs' c
 function compute_average_content_size_customer(instance::Instance)
     C = instance.C
     avg_l = Vector{Float64}(undef, C)
-    for c = 1:C
+    for c in 1:C
         customer_routes = list_routes_customer(instance.solution, c)
         nb_routes = length(customer_routes)
         if nb_routes > 0
@@ -75,7 +76,7 @@ the [`modified_capa_initialization_plus_ls!`](@ref) to estimate the flow arcs' c
 function compute_average_content_size_day(instance::Instance)
     T = instance.T
     avg_l = Vector{Float64}(undef, T)
-    for t = 1:T
+    for t in 1:T
         day_routes = list_routes(instance.solution, t)
         nb_routes = length(day_routes)
         if nb_routes > 0
@@ -110,7 +111,7 @@ struct AverageContentSizes
         avg_l_d = compute_average_content_size_depot(instance)
         avg_l_c = compute_average_content_size_customer(instance)
         avg_l_t = compute_average_content_size_day(instance)
-        new(avg_l_d, avg_l_c, avg_l_t)
+        return new(avg_l_d, avg_l_c, avg_l_t)
     end
 end
 
@@ -121,7 +122,8 @@ Compute the average number of kilometers of the routes in the solution of `insta
 """
 function compute_average_nb_km(instance::Instance)
     avg_n = (
-        sum(compute_nb_km(route, instance) for route in list_routes(instance.solution)) / nb_routes(instance.solution)
+        sum(compute_nb_km(route, instance) for route in list_routes(instance.solution)) /
+        nb_routes(instance.solution)
     )
     return avg_n
 end
@@ -133,7 +135,10 @@ Compute the average duration in hours of the routes in the solution of `instance
 """
 function compute_average_route_duration(instance::Instance)
     avg_n = (
-        sum(compute_route_duration(route, instance) for route in list_routes(instance.solution)) / nb_routes(instance.solution)
+        sum(
+            compute_route_duration(route, instance) for
+            route in list_routes(instance.solution)
+        ) / nb_routes(instance.solution)
     )
     return avg_n
 end
@@ -145,7 +150,8 @@ Compute the average duration in hours of the routes in `solution` for `instance`
 """
 function compute_average_route_duration(instance::Instance, solution::SimpleSolution)
     avg_n = (
-        sum(compute_route_duration(route, instance) for route in solution.routes) / length(solution.routes)
+        sum(compute_route_duration(route, instance) for route in solution.routes) /
+        length(solution.routes)
     )
     return avg_n
 end
@@ -184,7 +190,7 @@ shortage [`compute_shortage_cost`](@ref) costs.
 function get_most_expensive_customers(instance::Instance)
     C = instance.C
     customer_cost = Vector{Int}(undef, C)
-    for c = 1:C
+    for c in 1:C
         customer = instance.customers[c]
         customer_cost[c] =
             compute_inventory_cost(customer) + compute_shortage_cost(customer)
