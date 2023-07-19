@@ -513,3 +513,14 @@ function read_instance_CSV(path_to_folder::String)::Instance
         solution=StructuredSolution(dims.T, dims.D),
     )
 end
+
+function read_instance_ZIP(instance_id::String)
+    instances_path = joinpath(datadep"IRP-instances", "instances.zip")
+    instances_zip = ZipFile.Reader(instances_path)
+    try
+        filenames = [f.name for f in instances_zip.files]
+        return filenames
+    finally
+        close(instances_zip)
+    end
+end

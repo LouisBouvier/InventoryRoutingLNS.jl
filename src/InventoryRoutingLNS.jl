@@ -68,4 +68,27 @@ export paper_matheuristic!, route_based_matheuristic!
 export modified_capa_initialization_plus_ls!, multi_depot_local_search!
 export analyze_solution, analyze_instance
 
+# Data dependencies
+function __init__()
+    DataDeps.register(
+        DataDep(
+            "IRP-instances",
+            """
+            TODO: description, authors, citation, copyright, etc.
+            """,
+            "http://cermics.enpc.fr/~parmenta/IRP/instances.zip",
+        ),
+    )
+    DataDeps.register(
+        DataDep(
+            "IRP-solutions",
+            """
+            TODO: description, authors, citation, copyright, etc.
+            """,
+            "http://cermics.enpc.fr/~parmenta/IRP/solutions.zip",
+        ),
+    )
+    return nothing
+end
+
 end
