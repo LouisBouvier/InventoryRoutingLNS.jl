@@ -1,9 +1,9 @@
 function heap_transpositions!(acc::Vector{Tuple{Int,Int}}, k::Int)
     if k == 1
-        return
+        return nothing
     else
         heap_transpositions!(acc, k - 1)
-        for i = 1:k-1
+        for i in 1:(k - 1)
             if k % 2 == 0
                 push!(acc, (i, k))
             else
@@ -40,7 +40,7 @@ function heap_permutations!(a)
         println(a)
         counter += 1
     end
-    println(counter)
+    return println(counter)
 end
 
 """
@@ -50,4 +50,4 @@ Constant list the transpositions necessary to enumerate all permutations of `1:k
 
 Computed for `k in 1:4` only.
 """
-const HEAP_TRANSPOSITIONS = [heap_transpositions(k) for k = 1:4]
+const HEAP_TRANSPOSITIONS = [heap_transpositions(k) for k in 1:4]

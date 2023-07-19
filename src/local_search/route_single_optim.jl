@@ -5,8 +5,8 @@ Update a `route` from a permutation `perm` of its stops.
 """
 function update_route_order!(route::Route, instance::Instance, perm::Vector{Int})
     D = instance.D
-    d = route.d 
-    t = route.t 
+    d = route.d
+    t = route.t
     transport_durations = instance.transport_durations
     nb_transport_hours_per_day = instance.nb_transport_hours_per_day
     # Change the stops order according to the permutation
@@ -15,10 +15,10 @@ function update_route_order!(route::Route, instance::Instance, perm::Vector{Int}
     c1 = route.stops[1].c
     cumulated_duration = transport_durations[d, D + c1]
     route.stops[1].t = t + floor(cumulated_duration / nb_transport_hours_per_day)
-    for s = 1:get_nb_stops(route)-1
-        c1, c2 = route.stops[s].c, route.stops[s+1].c
+    for s in 1:(get_nb_stops(route) - 1)
+        c1, c2 = route.stops[s].c, route.stops[s + 1].c
         cumulated_duration += transport_durations[D + c1, D + c2]
-        route.stops[s+1].t = t + floor(cumulated_duration / nb_transport_hours_per_day)
+        route.stops[s + 1].t = t + floor(cumulated_duration / nb_transport_hours_per_day)
     end
 end
 
@@ -29,13 +29,16 @@ Merge stops that visit the same customer, all gathered at the first date of stop
 """
 function compress!(route::Route, instance::Instance)
     if length(route.stops) <= 1
-        return
+        return nothing
     end
     cs = unique_stops([route])
     if length(cs) < length(route.stops)
         route.stops = [
-            RouteStop(c = c, t = min([stop.t for stop in route.stops if stop.c == c]...), Q = sum(stop.Q for stop in route.stops if stop.c == c)) for
-            c in cs
+            RouteStop(;
+                c=c,
+                t=min([stop.t for stop in route.stops if stop.c == c]...),
+                Q=sum(stop.Q for stop in route.stops if stop.c == c),
+            ) for c in cs
         ]
         update_route_order!(route, instance, collect(1:get_nb_stops(route)))
     end
@@ -50,28 +53,49 @@ Brutal enumeration of the possible permutations.
 """
 function reorder_optimally!(route::Route, instance::Instance)
     if length(route.stops) <= 1
-        return
+        return nothing
     end
     # parameters 
     S = length(route.stops)
-    M, T = instance.M, instance.T    
+    M, T = instance.M, instance.T
     # Consider affected variables
-    departure_time = route.t 
+    departure_time = route.t
     cs = unique_stops(route)
-    ms = [m for m = 1:M if uses_commodity(route, m)]
+    ms = [m for m in 1:M if uses_commodity(route, m)]
     ts = collect(departure_time:T)
     # Compute current local cost
-    mincost = departure_time + floor(compute_route_duration(route, instance)/instance.nb_transport_hours_per_day) > T ? Inf : compute_cost(instance, ds = Vector{Int}(), cs = cs, ms = ms, ts = ts, solution = SimpleSolution([route]))
+    mincost =
+        if departure_time + floor(
+            compute_route_duration(route, instance) / instance.nb_transport_hours_per_day
+        ) > T
+            Inf
+        else
+            compute_cost(
+                instance;
+                ds=Vector{Int}(),
+                cs=cs,
+                ms=ms,
+                ts=ts,
+                solution=SimpleSolution([route]),
+            )
+        end
     bestorder = collect(1:S)
     # Enumerate permutations (S is small !)
-    permutations = collect(Combinatorics.nthperm(1:S, k) for k = 1:factorial(S))
+    permutations = collect(Combinatorics.nthperm(1:S, k) for k in 1:factorial(S))
     for permutation in permutations
         route_modified = copy(route)
         update_route_order!(route_modified, instance, permutation)
         if feasibility(route_modified, instance)
             update_instance_some_routes!(instance, [route], "delete", false)
             update_instance_some_routes!(instance, [route_modified], "add", false)
-            newcost = compute_cost(instance, ds = Vector{Int}(), cs = cs, ms = ms, ts = ts, solution = SimpleSolution([route_modified]))
+            newcost = compute_cost(
+                instance;
+                ds=Vector{Int}(),
+                cs=cs,
+                ms=ms,
+                ts=ts,
+                solution=SimpleSolution([route_modified]),
+            )
             update_instance_some_routes!(instance, [route_modified], "delete", false)
             update_instance_some_routes!(instance, [route], "add", false)
         else
@@ -95,7 +119,7 @@ Compress and reorder `route` to optimality.
 function optimize_route!(route::Route, instance::Instance)
     compress!(route, instance)
     # @assert length(route.stops) <= 4
-    reorder_optimally!(route, instance)
+    return reorder_optimally!(route, instance)
 end
 
 """

@@ -9,18 +9,18 @@ list_of_instances = readdir(folder_path)
 
 for instance_id in list_of_instances
     ## Open
-    println("Open instance "*instance_id)
-    instance = read_instance_CSV("data/instances/"*instance_id)
+    println("Open instance " * instance_id)
+    instance = read_instance_CSV("data/instances/" * instance_id)
     ## Solve
-    paper_matheuristic!(instance;
-        n_it_commodity_reinsertion = 15,
-        n_it_customer_reinsertion = 200,
-        tol = -0.01,
-        time_limit = 90.,
-        verbose = true,
+    paper_matheuristic!(
+        instance;
+        n_it_commodity_reinsertion=15,
+        n_it_customer_reinsertion=200,
+        tol=-0.01,
+        time_limit=90.0,
+        verbose=true,
     )
 end
-
 
 # Uncomment the following lines to visualize instances and solutions
 

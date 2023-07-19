@@ -2,8 +2,9 @@ using InventoryRoutingLNS
 using Documenter
 using Literate
 
-
-DocMeta.setdocmeta!(InventoryRoutingLNS, :DocTestSetup, :(using InventoryRoutingLNS); recursive=true)
+DocMeta.setdocmeta!(
+    InventoryRoutingLNS, :DocTestSetup, :(using InventoryRoutingLNS); recursive=true
+)
 
 function markdown_title(path)
     title = "?"
@@ -43,7 +44,4 @@ makedocs(;
     pages=pages,
 )
 
-deploydocs(;
-    repo="github.com/LouisBouvier/InventoryRoutingLNS.jl",
-    devbranch="main",
-)
+deploydocs(; repo="github.com/LouisBouvier/InventoryRoutingLNS.jl", devbranch="main")

@@ -9,7 +9,8 @@ get_M(site::Site) = length(site.initial_inventory)
 get_T(site::Site) = size(site.maximum_inventory, 2)
 
 uses_commodity(site::Site, m::Int)::Bool = site.commodity_used[m]
-commodities_used(site::Site)::Vector{Bool} = [uses_commodity(site, m) for m = 1:get_M(site)]
+commodities_used(site::Site)::Vector{Bool} =
+    [uses_commodity(site, m) for m in 1:get_M(site)]
 
 """
     positive_inventory(site::Site)

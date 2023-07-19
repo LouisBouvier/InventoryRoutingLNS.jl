@@ -8,14 +8,13 @@ IRP solution as matrix of routes per day and depot.
 """
 mutable struct StructuredSolution <: Solution
     routes_per_day_and_depot::Matrix{Vector{Route}}
-
 end
 
 ## Constructor
 
 function StructuredSolution(T::Int, D::Int)
     routes_per_day_and_depot = Matrix{Vector{Route}}(undef, T, D)
-    for t = 1:T, d = 1:D
+    for t in 1:T, d in 1:D
         routes_per_day_and_depot[t, d] = Route[]
     end
     return StructuredSolution(routes_per_day_and_depot)
@@ -29,8 +28,8 @@ Copy structured `solution`.
 """
 function Base.copy(solution::StructuredSolution)
     return StructuredSolution([
-        [copy(route) for route in list_routes(solution, t, d)] for t = 1:get_T(solution),
-        d = 1:get_D(solution)
+        [copy(route) for route in list_routes(solution, t, d)] for t in 1:get_T(solution),
+        d in 1:get_D(solution)
     ])
 end
 
@@ -42,8 +41,8 @@ Custom copy of a structured `solution`.
 """
 function mycopy(solution::StructuredSolution)
     return StructuredSolution([
-        [mycopy(route) for route in list_routes(solution, t, d)] for t = 1:get_T(solution),
-        d = 1:get_D(solution)
+        [mycopy(route) for route in list_routes(solution, t, d)] for t in 1:get_T(solution),
+        d in 1:get_D(solution)
     ])
 end
 
@@ -133,7 +132,7 @@ Get the list of routes starting on day `t` in a structured `solution`.
 function list_routes(solution::StructuredSolution, t::Int)
     routes = Vector{Route}(undef, nb_routes(solution, t))
     r = 0
-    for d = 1:get_D(solution)
+    for d in 1:get_D(solution)
         for route in list_routes(solution, t, d)
             r += 1
             routes[r] = route
@@ -150,7 +149,7 @@ Get the list of routes of a structured `solution`.
 function list_routes(solution::StructuredSolution)
     routes = Vector{Route}(undef, nb_routes(solution))
     r = 0
-    for t = 1:get_T(solution), d = 1:get_D(solution)
+    for t in 1:get_T(solution), d in 1:get_D(solution)
         for route in list_routes(solution, t, d)
             r += 1
             routes[r] = route
@@ -165,9 +164,9 @@ end
 Get the list of routes starting by depot `d` in a structured `solution`.
 """
 function list_routes_depot(solution::StructuredSolution, d::Int)
-    routes = Vector{Route}(undef, sum(nb_routes(solution, t, d) for t = 1:get_T(solution)))
+    routes = Vector{Route}(undef, sum(nb_routes(solution, t, d) for t in 1:get_T(solution)))
     r = 0
-    for t = 1:get_T(solution)
+    for t in 1:get_T(solution)
         for route in list_routes(solution, t, d)
             r += 1
             routes[r] = route
@@ -247,7 +246,7 @@ end
 Push `route` to a structured `solution`.
 """
 function add_route!(solution::StructuredSolution, route::Route)
-    push!(solution.routes_per_day_and_depot[route.t, route.d], route)
+    return push!(solution.routes_per_day_and_depot[route.t, route.d], route)
 end
 
 """
@@ -268,7 +267,7 @@ end
 Delete the `r`-th route starting on day `t` by depot `d` from a structured `solution`.
 """
 function delete_route!(solution::StructuredSolution, t::Int, d::Int, r::Int)
-    deleteat!(solution.routes_per_day_and_depot[t, d], r)
+    return deleteat!(solution.routes_per_day_and_depot[t, d], r)
 end
 
 """
@@ -277,7 +276,7 @@ end
 Delete the `rs`-th routes starting on day `t` by depot `d` from a structured `solution`.
 """
 function delete_routes!(solution::StructuredSolution, t::Int, d::Int, rs)
-    deleteat!(solution.routes_per_day_and_depot[t, d], rs)
+    return deleteat!(solution.routes_per_day_and_depot[t, d], rs)
 end
 
 """
@@ -287,7 +286,7 @@ Delete `route` from a structured `solution`.
 """
 function delete_route!(solution::StructuredSolution, route::Route)
     t, d = route.t, route.d
-    for r = 1:nb_routes(solution, t, d)
+    for r in 1:nb_routes(solution, t, d)
         if get_route(solution, t, d, r).id == route.id
             delete_route!(solution, t, d, r)
             return true

@@ -6,27 +6,27 @@ Define and solve the initial flow problems to decide the quantities to send.
 From the quantities we solve bin packing problems 
 and apply localsearch in  [`initialization_plus_ls!`](@ref).
 """
-function solve_flows_initial_solution(instance::Instance;
-                                    average_content_sizes::Union{Nothing,AverageContentSizes} = nothing,
-                                    )
+function solve_flows_initial_solution(
+    instance::Instance; average_content_sizes::Union{Nothing,AverageContentSizes}=nothing
+)
     D, C, T, M = instance.D, instance.C, instance.T, instance.M
 
     fgs_commodities = Vector{FlowGraph}(undef, M)
     values = Vector{Int}(undef, M)
     flows = Vector{Vector{Float64}}(undef, M)
     env = Gurobi.Env()
-    @showprogress "Solve one flow problem per commodity:" for m = 1:M
+    @showprogress "Solve one flow problem per commodity:" for m in 1:M
         fg_commodity = commodity_flow_graph(
-                instance;
-                commodity_index = m,
-                S_max = 1,
-                maxdist = Inf,
-                relaxed_trip_cost = true,
-                average_content_sizes = average_content_sizes,
-                force_routes_values = false,
-                sent_quantities_to_force = zeros(1),
-                sparsify = true,
-                set_upper_capa = false,
+            instance;
+            commodity_index=m,
+            S_max=1,
+            maxdist=Inf,
+            relaxed_trip_cost=true,
+            average_content_sizes=average_content_sizes,
+            force_routes_values=false,
+            sent_quantities_to_force=zeros(1),
+            sparsify=true,
+            set_upper_capa=false,
         )
         # end
 
@@ -52,7 +52,7 @@ function solve_flows_initial_solution(instance::Instance;
     value_of_flows = sum(values)
     sent_quantities = zeros(Int, M, D, C, T)
 
-    for m = 1:M
+    for m in 1:M
         fg_commodity = fgs_commodities[m]
         for (k, edge) in enumerate(edges(fg_commodity))
             n1 = get_vertexlabel(fg_commodity, src(edge))
@@ -69,7 +69,6 @@ function solve_flows_initial_solution(instance::Instance;
 
     return value_of_flows, sent_quantities
 end
-
 
 """
     lower_bound(instance::Instance)
@@ -90,20 +89,20 @@ function lower_bound(instance::Instance)
     # precompute possible delays
     possible_delays = compute_delays(instance)
 
-    @showprogress "Solve one flow problem per commodity:" for m = 1:M
+    @showprogress "Solve one flow problem per commodity:" for m in 1:M
         fg_commodity = commodity_flow_graph(
             instance;
-            commodity_index = m,
-            S_max = 1,
-            maxdist = Inf,
-            relaxed_trip_cost = true,
-            average_content_sizes = nothing,
-            force_routes_values = false,
-            sent_quantities_to_force = zeros(1),
-            sparsify = true,
-            set_upper_capa = false,
-            possible_delays = possible_delays,
-            add_delayed_arcs = true,
+            commodity_index=m,
+            S_max=1,
+            maxdist=Inf,
+            relaxed_trip_cost=true,
+            average_content_sizes=nothing,
+            force_routes_values=false,
+            sent_quantities_to_force=zeros(1),
+            sparsify=true,
+            set_upper_capa=false,
+            possible_delays=possible_delays,
+            add_delayed_arcs=true,
         )
 
         fgs_commodities[m] = fg_commodity

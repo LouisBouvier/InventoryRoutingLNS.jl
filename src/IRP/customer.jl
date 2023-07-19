@@ -50,10 +50,10 @@ struct Customer <: Site
         maximum_inventory,
     )
         quantity_received = zeros(Int, size(demand))
-        inventory = max.(0, initial_inventory .- cumsum(demand, dims = 2))
+        inventory = max.(0, initial_inventory .- cumsum(demand; dims=2))
         commodity_used = [
             (initial_inventory[m] > 0 || any(demand[m, :] .> 0)) for
-            m = 1:length(initial_inventory)
+            m in 1:length(initial_inventory)
         ]
         return new(
             c,
@@ -86,7 +86,7 @@ function Base.show(io::IO, customer::Customer)
     # str *= "\n   Daily demand $(customer.demand)"
     # str *= "\n   Daily maximum inventory $(customer.maximum_inventory)"
     # str *= "\n   Daily inventory $(customer.inventory)"
-    print(io, str)
+    return print(io, str)
 end
 
 """
@@ -95,15 +95,15 @@ end
 Copy `customer`.
 """
 function Base.copy(customer::Customer)
-    return Customer(
-        c = customer.c,
-        v = customer.v,
-        coordinates = customer.coordinates,
-        excess_inventory_cost = customer.excess_inventory_cost,
-        shortage_cost = customer.shortage_cost,
-        initial_inventory = customer.initial_inventory,
-        demand = customer.demand,
-        maximum_inventory = customer.maximum_inventory,
+    return Customer(;
+        c=customer.c,
+        v=customer.v,
+        coordinates=customer.coordinates,
+        excess_inventory_cost=customer.excess_inventory_cost,
+        shortage_cost=customer.shortage_cost,
+        initial_inventory=customer.initial_inventory,
+        demand=customer.demand,
+        maximum_inventory=customer.maximum_inventory,
     )
 end
 
@@ -115,15 +115,15 @@ Set `c` and `v` as indices for `customer` over customers and sites respectively.
 This can be used when dividing an instance into several smaller ones.
 """
 function renumber(customer::Customer; c::Int, v::Int)
-    return Customer(
-        c = c,
-        v = v,
-        coordinates = customer.coordinates,
-        excess_inventory_cost = customer.excess_inventory_cost,
-        shortage_cost = customer.shortage_cost,
-        initial_inventory = customer.initial_inventory,
-        demand = customer.demand,
-        maximum_inventory = customer.maximum_inventory,
+    return Customer(;
+        c=c,
+        v=v,
+        coordinates=customer.coordinates,
+        excess_inventory_cost=customer.excess_inventory_cost,
+        shortage_cost=customer.shortage_cost,
+        initial_inventory=customer.initial_inventory,
+        demand=customer.demand,
+        maximum_inventory=customer.maximum_inventory,
     )
 end
 
@@ -149,7 +149,7 @@ Check if `customer` has received one type of commodity it does not need.
 It is used for feasibility tests in [`feasibility`](@ref).
 """
 function positive_inventory_zero_demand_and_initial_inventory(customer::Customer)
-    for m = 1:get_M(customer)
+    for m in 1:get_M(customer)
         if positive_inventory_zero_demand_and_initial_inventory(customer, m)
             return true
         end

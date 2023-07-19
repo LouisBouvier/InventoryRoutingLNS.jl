@@ -17,12 +17,13 @@ The number of commodity reinsertion per LNS iteration is `n_it_commodity_reinser
 same for `n_it_customer_reinsertion` and customer reinsertion. We can set a time limit 
 to the solution process with `time_limit`.
 """
-function paper_matheuristic!(instance::Instance;
+function paper_matheuristic!(
+    instance::Instance;
     n_it_commodity_reinsertion::Int,
-    n_it_customer_reinsertion::Int, 
-    tol::Float64 = 0.01,
-    time_limit::Float64 = 90.0,
-    verbose::Bool = false,
+    n_it_customer_reinsertion::Int,
+    tol::Float64=0.01,
+    time_limit::Float64=90.0,
+    verbose::Bool=false,
 )
     # create dict for logs
     stats = Dict()
@@ -87,20 +88,21 @@ function paper_matheuristic!(instance::Instance;
 
     # start solving
     # initialization plus local search
-    stats["duration_init_plus_ls"] =
-        @elapsed modified_capa_initialization_plus_ls!(instance, verbose = verbose, stats = stats)
+    stats["duration_init_plus_ls"] = @elapsed modified_capa_initialization_plus_ls!(
+        instance, verbose=verbose, stats=stats
+    )
     cost_after_init_ls, details_init_ls = compute_detailed_cost(instance)
-    @assert feasibility(instance, verbose = verbose)
+    @assert feasibility(instance, verbose=verbose)
     # large neighborhood search
     LNS!(
-        instance,
-        tol = tol,
-        n_it_commodity_reinsertion = n_it_commodity_reinsertion,
-        n_it_customer_reinsertion = n_it_customer_reinsertion,
-        verbose = verbose,
-        stats = stats,
+        instance;
+        tol=tol,
+        n_it_commodity_reinsertion=n_it_commodity_reinsertion,
+        n_it_customer_reinsertion=n_it_customer_reinsertion,
+        verbose=verbose,
+        stats=stats,
     )
-    @assert feasibility(instance, verbose = verbose)
+    @assert feasibility(instance, verbose=verbose)
     cost_after_lns, details_lns = compute_detailed_cost(instance)
     # compute a lower bound
     lb = lower_bound(instance)

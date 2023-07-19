@@ -9,24 +9,24 @@ function fill_trucks!(instance::Instance; sent_quantities::Array{Int,4})
     vehicle_capacity = instance.vehicle_capacity
     transport_durations = instance.transport_durations
     nb_transport_hours_per_day = instance.nb_transport_hours_per_day
-    l = [instance.commodities[m].l for m = 1:M]
+    l = [instance.commodities[m].l for m in 1:M]
 
-    for t = 1:T, d = 1:D, c = 1:C
+    for t in 1:T, d in 1:D, c in 1:C
         quant = sent_quantities[1:M, d, c, t]
         if sum(quant) == 0
             continue
         end
-        items = [m for m = 1:M for n = 1:quant[m]]
-        lengths = [l[m] for m = 1:M for n = 1:quant[m]]
+        items = [m for m in 1:M for n in 1:quant[m]]
+        lengths = [l[m] for m in 1:M for n in 1:quant[m]]
         bin_items = first_fit_decreasing(items, lengths, vehicle_capacity)
         for bin in bin_items
             Q = zeros(Int, M)
             for m in bin
                 Q[m] += 1
             end
-            t_c = t + floor(transport_durations[d, D+c] / nb_transport_hours_per_day)
-            stop = RouteStop(c = c, t = t_c, Q = Q)
-            route = Route(t = t, d = d, stops = [stop])
+            t_c = t + floor(transport_durations[d, D + c] / nb_transport_hours_per_day)
+            stop = RouteStop(; c=c, t=t_c, Q=Q)
+            route = Route(; t=t, d=d, stops=[stop])
             add_route!(instance.solution, route)
         end
     end
@@ -67,38 +67,34 @@ the [`LNS!`](@ref) solution are good solutions to the IRP when decoded by this f
 """
 function initialization_plus_ls!(
     instance::Instance;
-    maxdist::Real = Inf,
-    average_content_sizes::Union{Nothing,AverageContentSizes} = nothing,
-    verbose::Bool = true,
-    reset_after::Bool = false,
-    stats::Union{Nothing, Dict} = nothing,
-    sent_quantities::Union{Nothing, Array{Int,4}} = nothing,
+    maxdist::Real=Inf,
+    average_content_sizes::Union{Nothing,AverageContentSizes}=nothing,
+    verbose::Bool=true,
+    reset_after::Bool=false,
+    stats::Union{Nothing,Dict}=nothing,
+    sent_quantities::Union{Nothing,Array{Int,4}}=nothing,
 )
-
     verbose && println("\n\nINITIALIZATION PLUS LS\n\n")
     verbose && println("Cost without vehicle: ", compute_cost(instance))
 
     if sent_quantities === nothing
-        flows_value, sent_quantities =
-            solve_flows_initial_solution(instance, average_content_sizes = average_content_sizes)
+        flows_value, sent_quantities = solve_flows_initial_solution(
+            instance; average_content_sizes=average_content_sizes
+        )
         verbose && println("Cost of the flows problem: ", flows_value)
     end
 
-    fill_trucks!(instance, sent_quantities = sent_quantities)
+    fill_trucks!(instance; sent_quantities=sent_quantities)
     verbose && println("Cost before local search: ", compute_cost(instance))
     verbose && println("Nb of vehicles before local search: ", nb_routes(instance.solution))
 
     single_depot_local_search!(
-        instance,
-        maxdist = maxdist,
-        verbose = verbose,
-        stats = stats,
-        in_LNS = false,
+        instance; maxdist=maxdist, verbose=verbose, stats=stats, in_LNS=false
     )
     verbose && println("Final cost: ", compute_cost(instance))
     verbose && println("Final nb of vehicles: ", nb_routes(instance.solution))
 
-    reset_after && reset_solution!(instance)
+    return reset_after && reset_solution!(instance)
 end
 
 """
@@ -114,20 +110,17 @@ The `maxdist` argument is used to sparsify graphs based on distances, see
 [`commodity_flow_graph`](@ref) for the details.
 """
 function modified_capa_initialization_plus_ls!(
-    instance::Instance;
-    maxdist::Real = Inf,
-    verbose::Bool = true,
-    stats::Dict = nothing,
+    instance::Instance; maxdist::Real=Inf, verbose::Bool=true, stats::Dict=nothing
 )
-    initialization_plus_ls!(instance, maxdist = maxdist, verbose = verbose, stats = stats)
-    compute_cost(instance, verbose = verbose)
+    initialization_plus_ls!(instance; maxdist=maxdist, verbose=verbose, stats=stats)
+    compute_cost(instance; verbose=verbose)
     average_content_sizes = AverageContentSizes(instance)
     initialization_plus_ls!(
-        instance,
-        maxdist = maxdist,
-        average_content_sizes = average_content_sizes,
-        verbose = verbose,
-        stats = stats,
+        instance;
+        maxdist=maxdist,
+        average_content_sizes=average_content_sizes,
+        verbose=verbose,
+        stats=stats,
     )
-    compute_cost(instance, verbose = verbose)
+    return compute_cost(instance; verbose=verbose)
 end

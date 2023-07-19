@@ -18,7 +18,6 @@ using SparseArrays
 
 using DataStructures: OrderedDict
 
-
 include("IRP/commodity.jl")
 include("IRP/site.jl")
 include("IRP/depot.jl")
@@ -68,4 +67,5 @@ export read_instance_CSV, read_solution
 export paper_matheuristic!, route_based_matheuristic!
 export modified_capa_initialization_plus_ls!, multi_depot_local_search!
 export analyze_solution, analyze_instance
+
 end

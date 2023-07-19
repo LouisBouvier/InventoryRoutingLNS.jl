@@ -16,10 +16,9 @@ considered at once. Here because of the size of the instances and additional
 structure (multi-depot, multi-commodity, routes that last several days) we 
 adapt the ideas solving one MILP per depot (heuristic).
 """
-function route_based_matheuristic!(instance::Instance;
-                                time_limit::Float64,
-                                verbose::Bool = true, 
-)                                
+function route_based_matheuristic!(
+    instance::Instance; time_limit::Float64, verbose::Bool=true
+)
     # Statistics on the solution 
     stats = Dict()
     stats["time_limit"] = time_limit
@@ -59,13 +58,14 @@ function route_based_matheuristic!(instance::Instance;
     stats["duration_commodity_reinsertion"] = 0
 
     # Initial solution with greedy heuristic
-    stats["duration_init_plus_ls"] =
-        @elapsed modified_capa_initialization_plus_ls!(instance, verbose = verbose, stats = stats)
+    stats["duration_init_plus_ls"] = @elapsed modified_capa_initialization_plus_ls!(
+        instance, verbose=verbose, stats=stats
+    )
 
     cost_after_init_ls, details_init_ls = compute_detailed_cost(instance)
-    
+
     # Refill MILP to solve 
-    refill_iterative_depot!(instance; verbose = verbose, stats = stats)
+    refill_iterative_depot!(instance; verbose=verbose, stats=stats)
 
     @assert(feasibility(instance))
     cost_after_refill, details_refill = compute_detailed_cost(instance)

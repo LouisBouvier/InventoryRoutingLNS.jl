@@ -50,7 +50,7 @@ function Base.show(io::IO, route::Route)
     #     str *= "\n      Customer $(stop.c)"
     #     str *= "\n      Delivery $(stop.Q)"
     # end
-    print(io, str)
+    return print(io, str)
 end
 
 """
@@ -59,7 +59,7 @@ end
 Copy route `stop`.
 """
 function Base.copy(stop::RouteStop)
-    return RouteStop(c = stop.c, t = copy(stop.t), Q = stop.Q)
+    return RouteStop(; c=stop.c, t=copy(stop.t), Q=stop.Q)
 end
 
 """
@@ -68,7 +68,7 @@ end
 Copy `route`.
 """
 function Base.copy(route::Route)
-    return Route(t = route.t, d = route.d, stops = copy(route.stops))
+    return Route(; t=route.t, d=route.d, stops=copy(route.stops))
 end
 
 """
@@ -79,7 +79,7 @@ Custom copy of a route `stop`.
 This is currently used in routing neighborhoods.
 """
 function mycopy(stop::RouteStop)
-    return RouteStop(c = stop.c, t = stop.t, Q = stop.Q)
+    return RouteStop(; c=stop.c, t=stop.t, Q=stop.Q)
 end
 
 """
@@ -101,9 +101,8 @@ Custom copy of `route`.
 This is currently used in routing neighborhoods.
 """
 function mycopy(route::Route)
-    return Route(t = route.t, d = route.d, stops = [mycopy(stop) for stop in route.stops])
+    return Route(; t=route.t, d=route.d, stops=[mycopy(stop) for stop in route.stops])
 end
-
 
 ## Getters
 """
@@ -174,17 +173,16 @@ function check_if_connected(routes1::Vector{Route}, routes2::Vector{Route})
     for route in routes1
         append!(customers1, unique_stops(route))
     end
-    for route in routes2 
+    for route in routes2
         append!(customers2, unique_stops(route))
     end
-    if !isempty(intersect(Set(depots1), Set(depots2))) || !isempty(intersect(Set(customers1), Set(customers2)))
+    if !isempty(intersect(Set(depots1), Set(depots2))) ||
+        !isempty(intersect(Set(customers1), Set(customers2)))
         return true
     else
         return false
     end
 end
-
-
 
 """
     decouple_routes(routes::Vector{Route})
@@ -199,31 +197,31 @@ function decouple_routes(routes::Vector{Route})
     clusters = collect(1:length(routes))
     old_nb_clusters = length(unique(clusters))
     for i1 in unique(clusters), i2 in unique(clusters)
-        if i1 == i2 
+        if i1 == i2
             continue
         end
         routes1 = routes[clusters .== i1]
         routes2 = routes[clusters .== i2]
         if check_if_connected(routes1, routes2)
             clusters[clusters .== i2] .= i1
-            break 
+            break
         end
     end
     nb_clusters = length(unique(clusters))
     while old_nb_clusters != nb_clusters
         old_nb_clusters = nb_clusters
         for i1 in unique(clusters), i2 in unique(clusters)
-            if i1 == i2 
+            if i1 == i2
                 continue
             end
             routes1 = routes[clusters .== i1]
             routes2 = routes[clusters .== i2]
             if check_if_connected(routes1, routes2)
-                clusters[clusters .== i2] .= i1 
+                clusters[clusters .== i2] .= i1
                 break
             end
         end
         nb_clusters = length(unique(clusters))
     end
-    return clusters 
+    return clusters
 end
