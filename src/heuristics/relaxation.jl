@@ -1,5 +1,5 @@
 """
-    solve_flows_initial_solution(instance::Instance; average_content_sizes::Union{Nothing,AverageContentSizes} = nothing)
+    solve_flows_initial_solution(instance::Instance; optimizer, average_content_sizes::Union{Nothing,AverageContentSizes} = nothing)
 
 Define and solve the initial flow problems to decide the quantities to send.
 
@@ -7,14 +7,15 @@ From the quantities we solve bin packing problems
 and apply localsearch in  [`initialization_plus_ls!`](@ref).
 """
 function solve_flows_initial_solution(
-    instance::Instance; average_content_sizes::Union{Nothing,AverageContentSizes}=nothing
+    instance::Instance;
+    optimizer,
+    average_content_sizes::Union{Nothing,AverageContentSizes}=nothing,
 )
     D, C, T, M = instance.D, instance.C, instance.T, instance.M
 
     fgs_commodities = Vector{FlowGraph}(undef, M)
     values = Vector{Int}(undef, M)
     flows = Vector{Vector{Float64}}(undef, M)
-    env = Gurobi.Env()
     @showprogress "Solve one flow problem per commodity:" for m in 1:M
         fg_commodity = commodity_flow_graph(
             instance;
@@ -32,7 +33,7 @@ function solve_flows_initial_solution(
 
         fgs_commodities[m] = fg_commodity
 
-        model = Model(() -> Gurobi.Optimizer(env))
+        model = Model(optimizer)
         @variable(model, x[1:ne(fg_commodity)] >= 0)
 
         add_flow_constraints!(model, model[:x], fg_commodity)
@@ -40,8 +41,14 @@ function solve_flows_initial_solution(
         add_flow_cost!(expr, model[:x], fg_commodity)
         @objective(model, Min, expr)
 
-        set_optimizer_attribute(model, "OutputFlag", 0)
-        set_optimizer_attribute(model, "Method", 1)
+        if optimizer === Gurobi.Optimizer
+            set_optimizer_attribute(model, "OutputFlag", 0)
+            set_optimizer_attribute(model, "Method", 1)
+        elseif optimizer === HiGHS.Optimizer
+            set_optimizer_attribute(model, "output_flag", false)
+            set_optimizer_attribute(model, "solver", "simplex")
+            set_optimizer_attribute(model, "simplex_strategy", 1)
+        end
         optimize!(model)
         @assert termination_status(model) == MOI.OPTIMAL
 
@@ -71,7 +78,7 @@ function solve_flows_initial_solution(
 end
 
 """
-    lower_bound(instance::Instance)
+    lower_bound(instance::Instance; optimizer)
 
 Define and solve the initial flow relaxation problem on `instance`.
 
@@ -80,11 +87,10 @@ to create direct delayed arcs in the commodity flow graphs.
 See [`compute_delays`](@ref) for the delay computation, 
 and [`commodity_flow_graph`](@ref)for the impact on the commodity graphs.
 """
-function lower_bound(instance::Instance)
+function lower_bound(instance::Instance; optimizer)
     M = instance.M
     fgs_commodities = Vector{FlowGraph}(undef, M)
     values = Vector{Int}(undef, M)
-    env = Gurobi.Env()
 
     # precompute possible delays
     possible_delays = compute_delays(instance)
@@ -107,7 +113,7 @@ function lower_bound(instance::Instance)
 
         fgs_commodities[m] = fg_commodity
 
-        model = Model(() -> Gurobi.Optimizer(env))
+        model = Model(optimizer)
         @variable(model, x[1:ne(fg_commodity)] >= 0)
 
         add_flow_constraints!(model, model[:x], fg_commodity)
@@ -115,8 +121,14 @@ function lower_bound(instance::Instance)
         add_flow_cost!(expr, model[:x], fg_commodity)
         @objective(model, Min, expr)
 
-        set_optimizer_attribute(model, "OutputFlag", 0)
-        set_optimizer_attribute(model, "Method", 1)
+        if optimizer === Gurobi.Optimizer
+            set_optimizer_attribute(model, "OutputFlag", 0)
+            set_optimizer_attribute(model, "Method", 1)
+        elseif optimizer === HiGHS.Optimizer
+            set_optimizer_attribute(model, "output_flag", false)
+            set_optimizer_attribute(model, "solver", "simplex")
+            set_optimizer_attribute(model, "simplex_strategy", 1)
+        end
         optimize!(model)
         @assert termination_status(model) == MOI.OPTIMAL
 

@@ -6,8 +6,8 @@ using CSV
 using DataDeps
 using DataFrames
 using Distributed
-using Gurobi
 using Graphs
+using Gurobi
 using GZip
 using HiGHS
 using IterTools
@@ -15,7 +15,6 @@ using JSON
 using JuMP
 using LinearAlgebra
 using Plots
-using Preferences
 using ProgressMeter
 using Random
 using SparseArrays
@@ -83,9 +82,7 @@ function __init__()
             TODO: description, authors, citation, copyright, etc.
             """,
             "http://cermics.enpc.fr/~bouvierl/IRP/data/instances.tar.gz";
-            post_fetch_method=(
-                (file) -> decompress_dataset(file, joinpath(dirname(@__DIR__), "data"))
-            ),
+            post_fetch_method=(file -> decompress_dataset(file, "instances")),
         ),
     )
     DataDeps.register(
@@ -95,9 +92,7 @@ function __init__()
             TODO: description, authors, citation, copyright, etc.
             """,
             "http://cermics.enpc.fr/~bouvierl/IRP/data/solutions.tar.gz";
-            post_fetch_method=(
-                (file) -> decompress_dataset(file, joinpath(dirname(@__DIR__), "data"))
-            ),
+            post_fetch_method=(file -> decompress_dataset(file, "solutions")),
         ),
     )
     return nothing

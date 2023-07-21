@@ -37,6 +37,7 @@ end
 
 """
     initialization_plus_ls!(instance::Instance;
+                        optimizer,
                         maxdist::Real = Inf,
                         average_content_sizes::Union{Nothing,AverageContentSizes} = nothing,
                         verbose::Bool = true,
@@ -67,6 +68,7 @@ the [`LNS!`](@ref) solution are good solutions to the IRP when decoded by this f
 """
 function initialization_plus_ls!(
     instance::Instance;
+    optimizer,
     maxdist::Real=Inf,
     average_content_sizes::Union{Nothing,AverageContentSizes}=nothing,
     verbose::Bool=true,
@@ -79,7 +81,7 @@ function initialization_plus_ls!(
 
     if sent_quantities === nothing
         flows_value, sent_quantities = solve_flows_initial_solution(
-            instance; average_content_sizes=average_content_sizes
+            instance; optimizer, average_content_sizes=average_content_sizes
         )
         verbose && println("Cost of the flows problem: ", flows_value)
     end
@@ -99,6 +101,7 @@ end
 
 """
     modified_capa_initialization_plus_ls!(instance::Instance;
+                                    optimizer,
                                     maxdist::Real = Inf,
                                     verbose::Bool = true,
                                     stats::Dict = nothing,
@@ -110,13 +113,20 @@ The `maxdist` argument is used to sparsify graphs based on distances, see
 [`commodity_flow_graph`](@ref) for the details.
 """
 function modified_capa_initialization_plus_ls!(
-    instance::Instance; maxdist::Real=Inf, verbose::Bool=true, stats::Dict=nothing
+    instance::Instance;
+    optimizer,
+    maxdist::Real=Inf,
+    verbose::Bool=true,
+    stats::Dict=nothing,
 )
-    initialization_plus_ls!(instance; maxdist=maxdist, verbose=verbose, stats=stats)
+    initialization_plus_ls!(
+        instance; optimizer, maxdist=maxdist, verbose=verbose, stats=stats
+    )
     compute_cost(instance; verbose=verbose)
     average_content_sizes = AverageContentSizes(instance)
     initialization_plus_ls!(
         instance;
+        optimizer,
         maxdist=maxdist,
         average_content_sizes=average_content_sizes,
         verbose=verbose,

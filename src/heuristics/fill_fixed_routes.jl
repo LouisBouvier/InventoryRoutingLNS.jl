@@ -1,5 +1,6 @@
 """
     fill_fixed_routes_MILP(instance::Instance;
+                            optimizer,
                             fixed_routes::Vector{Route},
                             fixed_routes_costs::Vector{Int},
                             integer::Bool = true,
@@ -21,6 +22,7 @@ a warm start.
 """
 function fill_fixed_routes_MILP(
     instance::Instance;
+    optimizer,
     fixed_routes::Vector{Route},
     fixed_routes_costs::Vector{Int},
     integer::Bool=true,
@@ -36,7 +38,7 @@ function fill_fixed_routes_MILP(
     vehicle_capacity = instance.vehicle_capacity
 
     # Solver environment and model
-    model = Model(Gurobi.Optimizer)
+    model = Model(optimizer)
 
     # Vehicles graph and variable 
     @variable(model, x[1:length(fixed_routes)] >= 0, binary = true)
@@ -93,10 +95,18 @@ function fill_fixed_routes_MILP(
     @objective(model, Min, obj)
 
     # Optimize the model 
-    set_optimizer_attribute(model, "MIPGap", 0.05)
-    set_optimizer_attribute(model, "TimeLimit", 120)
-    set_optimizer_attribute(model, "Method", 1)
-    set_optimizer_attribute(model, "OutputFlag", 0)
+    if optimizer === Gurobi.Optimizer
+        set_optimizer_attribute(model, "MIPGap", 0.05)
+        set_optimizer_attribute(model, "TimeLimit", 120)
+        set_optimizer_attribute(model, "Method", 1)
+        set_optimizer_attribute(model, "OutputFlag", 0)
+    elseif optimizer === HiGHS.Optimizer
+        set_optimizer_attribute(model, "mip_rel_gap", 0.05)
+        set_optimizer_attribute(model, "time_limit", 120)
+        set_optimizer_attribute(model, "solver", "simplex")
+        set_optimizer_attribute(model, "simplex_strategy", 1)
+        set_optimizer_attribute(model, "output_flag", false)
+    end
     optimize!(model)
 
     verbose && println(objective_value(model))

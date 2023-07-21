@@ -44,6 +44,7 @@ end
 
 """
     commodity_insertion_MILP(instance::Instance;
+                                optimizer,
                                 commodity_index::Int,
                                 integer::Bool,
                                 maxdist::Real,
@@ -68,6 +69,7 @@ to `values_commodities_flows` and `values_vehicles_flow`.
 """
 function commodity_insertion_MILP(
     instance::Instance;
+    optimizer,
     commodity_index::Int,
     integer::Bool,
     maxdist::Real,
@@ -89,7 +91,7 @@ function commodity_insertion_MILP(
 
     routes = list_routes(instance.solution)
 
-    model = Model(Gurobi.Optimizer)
+    model = Model(optimizer)
 
     # Vehicle flow: the new routes are direct for the moment
     fg_vehicles = expanded_vehicle_flow_graph(instance; S_max=1, maxdist=maxdist)
@@ -211,10 +213,18 @@ function commodity_insertion_MILP(
     add_flow_cost!(obj, model[:z], fg_commodity)
     @objective(model, Min, obj)
 
-    set_optimizer_attribute(model, "OutputFlag", 0) # TODO
-    set_optimizer_attribute(model, "TimeLimit", 20)
-    set_optimizer_attribute(model, "MIPGap", 0.005)
-    set_optimizer_attribute(model, "Method", 1)
+    if optimizer === Gurobi.Optimizer
+        set_optimizer_attribute(model, "OutputFlag", 0) # TODO
+        set_optimizer_attribute(model, "TimeLimit", 20)
+        set_optimizer_attribute(model, "MIPGap", 0.005)
+        set_optimizer_attribute(model, "Method", 1)
+    elseif optimizer === HiGHS.Optimizer
+        set_optimizer_attribute(model, "output_flag", false)
+        set_optimizer_attribute(model, "time_limit", 20)
+        set_optimizer_attribute(model, "mip_rel_gap", 0.005)
+        set_optimizer_attribute(model, "solver", "simplex")
+        set_optimizer_attribute(model, "simplex_strategy", 1)
+    end
     optimize!(model)
     #stat = termination_status(model)
 
@@ -325,6 +335,7 @@ end
 
 """
     one_step_ruin_recreate_commodity!(instance::Instance;
+                                        optimizer,
                                         commodity_index::Int,
                                         integer::Bool,
                                         maxdist::Real,
@@ -340,6 +351,7 @@ A warmstart is performed to gain speed, initialized at the last solution.
 """
 function one_step_ruin_recreate_commodity!(
     instance::Instance;
+    optimizer,
     commodity_index::Int,
     integer::Bool,
     maxdist::Real,

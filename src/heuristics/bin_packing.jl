@@ -29,17 +29,19 @@ function first_fit_decreasing(
 end
 
 """
-    bin_packing_milp(items::Vector{IT}, weights::Vector{<:Real}, W::Real) where {IT}
+    bin_packing_milp(items::Vector{IT}, weights::Vector{<:Real}, W::Real; optimizer) where {IT}
 
 Apply exact bin-packing to (`items`, `weights`) within a container of capacity `W`.
 
 Solve a MILP.
 """
-function bin_packing_milp(items::Vector{IT}, weights::Vector{<:Real}, W::Real) where {IT}
+function bin_packing_milp(
+    items::Vector{IT}, weights::Vector{<:Real}, W::Real; optimizer
+) where {IT}
     n = length(items)
     B = length(first_fit_decreasing(items, weights, W))
 
-    model = Model(Gurobi.Optimizer)
+    model = Model(optimizer)
     @variable(model, x[1:n, 1:B], Bin)
     @variable(model, y[1:B], Bin)
 

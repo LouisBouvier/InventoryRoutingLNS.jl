@@ -1,11 +1,9 @@
-using BenchmarkTools
 using DataDeps
 using InventoryRoutingLNS
 using Random
-using Revise
 Random.seed!(60)
 
-folder_path = joinpath(datadep"IRP-instances", "data", "instances")
+folder_path = joinpath(datadep"IRP-instances", "instances", "instances")
 list_of_instances = readdir(folder_path)
 
 for instance_id in list_of_instances
