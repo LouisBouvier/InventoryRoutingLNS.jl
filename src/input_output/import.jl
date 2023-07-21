@@ -1,3 +1,13 @@
+"""
+    decompress_dataset(compressed_path::String, decompressed_path::String)
+Decompress the dataset located at `compressed_path` and save it at `decompressed_path`.
+"""
+function decompress_dataset(compressed_path::String, decompressed_path::String)
+    GZip.open(compressed_path, "r") do tarball
+        Tar.extract(tarball, decompressed_path)
+    end
+end
+
 ## Instance dimensions
 """
     read_dimensions(row::String)::NamedTuple

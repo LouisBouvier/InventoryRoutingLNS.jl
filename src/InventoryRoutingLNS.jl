@@ -7,6 +7,8 @@ using DataDeps
 using DataFrames
 using Distributed
 using Gurobi
+using GZip
+using HiGHS
 using IterTools
 using JSON
 using JuMP
@@ -16,6 +18,7 @@ using Plots
 using ProgressMeter
 using Random
 using SparseArrays
+using Tar
 using ZipFile
 
 using DataStructures: OrderedDict
@@ -65,6 +68,7 @@ include("analysis/analyze_solutions.jl")
 include("analysis/analyze_instances.jl")
 
 ## Matheuristic
+export decompress_dataset
 export read_instance_CSV, read_instance_ZIP, read_solution
 export paper_matheuristic!, route_based_matheuristic!
 export modified_capa_initialization_plus_ls!, multi_depot_local_search!
@@ -78,7 +82,8 @@ function __init__()
             """
             TODO: description, authors, citation, copyright, etc.
             """,
-            "http://cermics.enpc.fr/~parmenta/IRP/instances.zip",
+            "http://cermics.enpc.fr/~bouvierl/IRP/data/instances.tar.gz";
+            post_fetch_method=((file) -> decompress_dataset(file, "data/")),
         ),
     )
     DataDeps.register(
@@ -87,7 +92,8 @@ function __init__()
             """
             TODO: description, authors, citation, copyright, etc.
             """,
-            "http://cermics.enpc.fr/~parmenta/IRP/solutions.zip",
+            "http://cermics.enpc.fr/~bouvierl/IRP/data/solutions.tar.gz";
+            post_fetch_method=((file) -> decompress_dataset(file, "data/")),
         ),
     )
     return nothing
