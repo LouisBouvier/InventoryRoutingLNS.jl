@@ -1,3 +1,5 @@
+ENV["DATADEPS_ALWAYS_ACCEPT"] = true
+
 using DataDeps
 using InventoryRoutingLNS
 using Random
