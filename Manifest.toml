@@ -2,7 +2,7 @@
 
 julia_version = "1.9.2"
 manifest_format = "2.0"
-project_hash = "2884fd257fc5ea1279e178f06a49a86962d5db5b"
+project_hash = "2715d5bd08963c8a2d97c757c988df3a821a44d1"
 
 [[deps.ArgTools]]
 uuid = "0dad84c5-d112-42e6-8d28-ef12dabb789f"
@@ -924,9 +924,9 @@ version = "2.3.0"
 
 [[deps.StaticArrays]]
 deps = ["LinearAlgebra", "Random", "StaticArraysCore"]
-git-tree-sha1 = "fffc14c695c17bfdbfa92a2a01836cdc542a1e46"
+git-tree-sha1 = "9cabadf6e7cd2349b6cf49f1915ad2028d65e881"
 uuid = "90137ffa-7385-5640-81b9-e52037218182"
-version = "1.6.1"
+version = "1.6.2"
 weakdeps = ["Statistics"]
 
     [deps.StaticArrays.extensions]
@@ -1211,12 +1211,6 @@ deps = ["Artifacts", "JLLWrappers", "Libdl"]
 git-tree-sha1 = "e92a1a012a10506618f10b7047e478403a046c77"
 uuid = "c5fb5394-a638-5e4d-96e5-b29de1b5cf10"
 version = "1.5.0+0"
-
-[[deps.ZipFile]]
-deps = ["Libdl", "Printf", "Zlib_jll"]
-git-tree-sha1 = "f492b7fe1698e623024e873244f10d89c95c340a"
-uuid = "a5390f91-8eb1-5f08-bee0-b1d1ffed6cea"
-version = "0.10.1"
 
 [[deps.Zlib_jll]]
 deps = ["Libdl"]
