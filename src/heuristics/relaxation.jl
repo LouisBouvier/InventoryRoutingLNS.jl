@@ -46,8 +46,8 @@ function solve_flows_initial_solution(
             set_optimizer_attribute(model, "Method", 1)
         elseif optimizer === HiGHS.Optimizer
             set_optimizer_attribute(model, "output_flag", false)
-            set_optimizer_attribute(model, "solver", "simplex")
-            set_optimizer_attribute(model, "simplex_strategy", 1)
+            set_optimizer_attribute(model, "presolve", "off")  # for some reason the flows are very slow without this
+            nothing
         end
         optimize!(model)
         @assert termination_status(model) == MOI.OPTIMAL
@@ -126,8 +126,7 @@ function lower_bound(instance::Instance; optimizer)
             set_optimizer_attribute(model, "Method", 1)
         elseif optimizer === HiGHS.Optimizer
             set_optimizer_attribute(model, "output_flag", false)
-            set_optimizer_attribute(model, "solver", "simplex")
-            set_optimizer_attribute(model, "simplex_strategy", 1)
+            set_optimizer_attribute(model, "presolve", "off")  # for some reason the flows are very slow without this
         end
         optimize!(model)
         @assert termination_status(model) == MOI.OPTIMAL

@@ -7,25 +7,27 @@ folder_path = joinpath(datadep"IRP-instances", "instances", "instances")
 list_of_instances = readdir(folder_path)
 
 for instance_id in list_of_instances
-    ## Open
-    println("Open instance " * instance_id)
+    println("Reading instance $instance_id")
     instance = read_instance_CSV(joinpath(folder_path, instance_id))
-    ## Solve
+end
+
+let instance_id = list_of_instances[1]
+    println("Solving instance $instance_id")
+    instance = read_instance_CSV(joinpath(folder_path, list_of_instances[1]))
     paper_matheuristic!(
         instance;
-        n_it_commodity_reinsertion=15,
-        n_it_customer_reinsertion=200,
+        n_it_commodity_reinsertion=3,
+        n_it_customer_reinsertion=3,
         tol=-0.01,
         time_limit=5.0,
         verbose=true,
     )
-    break
 end
 
 # Uncomment the following lines to visualize instances and solutions
 
-# solutions_path_lns = joinpath(datadep"IRP-solutions", "data", "solutions", "LNS_smax3_tl90_co10_cumax", "solutions", "LNS")
-# solutions_path_initls = joinpath(datadep"IRP-solutions", "data", "solutions", "LNS_smax3_tl90_co10_cumax", "solutions", "init_ls")
+# solutions_path_lns = joinpath(datadep"IRP-solutions", "solutions", "solutions", "LNS_smax3_tl90_co10_cumax", "solutions", "LNS")
+# solutions_path_initls = joinpath(datadep"IRP-solutions", "solutions", "solutions", "LNS_smax3_tl90_co10_cumax", "solutions", "init_ls")
 
 # for instance_id in list_of_instances
 #     ## Open instance

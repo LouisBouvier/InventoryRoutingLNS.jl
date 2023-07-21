@@ -326,7 +326,7 @@ function LNS!(
         best_solution = deepcopy(instance.solution)
     end
     # refill routes
-    refill_iterative_depot!(instance; verbose=verbose, stats=stats)
+    refill_iterative_depot!(instance; optimizer, verbose=verbose, stats=stats)
     cost_altered = compute_cost(instance)
     if cost_altered < best_cost
         best_cost = cost_altered
@@ -382,7 +382,7 @@ function LNS!(
             break
         end
         # refill routes
-        refill_iterative_depot!(instance; verbose=verbose, stats=stats)
+        refill_iterative_depot!(instance; optimizer, verbose=verbose, stats=stats)
         cost_altered = compute_cost(instance)
         if cost_altered < best_cost
             best_cost = cost_altered

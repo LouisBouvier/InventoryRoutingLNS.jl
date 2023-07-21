@@ -30,7 +30,7 @@ function paper_matheuristic!(
     # create dict for logs
     stats = Dict()
     stats["tol_LNS"] = tol
-    stats["time_limit"] = time_limit
+    stats["time_limit"] = time_limit  # TODO: never used?
     stats["n_iter_commodity_reinsertion"] = n_it_commodity_reinsertion
     stats["n_it_customer_reinsertion"] = n_it_customer_reinsertion
     stats["nb_iter_LNS"] = 0
@@ -108,7 +108,7 @@ function paper_matheuristic!(
     @assert feasibility(instance, verbose=verbose)
     cost_after_lns, details_lns = compute_detailed_cost(instance)
     # compute a lower bound
-    lb = lower_bound(instance)
+    lb = lower_bound(instance; optimizer)
     stats["lb"] = lb
     # print results
     verbose && println("\n")

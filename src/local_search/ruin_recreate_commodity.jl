@@ -220,10 +220,8 @@ function commodity_insertion_MILP(
         set_optimizer_attribute(model, "Method", 1)
     elseif optimizer === HiGHS.Optimizer
         set_optimizer_attribute(model, "output_flag", false)
-        set_optimizer_attribute(model, "time_limit", 20)
+        set_optimizer_attribute(model, "time_limit", 20.0)
         set_optimizer_attribute(model, "mip_rel_gap", 0.005)
-        set_optimizer_attribute(model, "solver", "simplex")
-        set_optimizer_attribute(model, "simplex_strategy", 1)
     end
     optimize!(model)
     #stat = termination_status(model)
@@ -373,6 +371,7 @@ function one_step_ruin_recreate_commodity!(
 
     _, fg_commodity, model, old_possible_routes_indices = commodity_insertion_MILP(
         instance;
+        optimizer,
         commodity_index=commodity_index,
         integer=integer,
         maxdist=maxdist,
@@ -395,6 +394,7 @@ function one_step_ruin_recreate_commodity!(
     ## Solve the insertion MILP with warm start
     _, fg_commodity, model, old_possible_routes_indices = commodity_insertion_MILP(
         instance;
+        optimizer,
         commodity_index=commodity_index,
         integer=integer,
         maxdist=maxdist,

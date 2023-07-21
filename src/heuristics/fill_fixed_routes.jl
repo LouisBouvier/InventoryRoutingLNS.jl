@@ -102,9 +102,7 @@ function fill_fixed_routes_MILP(
         set_optimizer_attribute(model, "OutputFlag", 0)
     elseif optimizer === HiGHS.Optimizer
         set_optimizer_attribute(model, "mip_rel_gap", 0.05)
-        set_optimizer_attribute(model, "time_limit", 120)
-        set_optimizer_attribute(model, "solver", "simplex")
-        set_optimizer_attribute(model, "simplex_strategy", 1)
+        set_optimizer_attribute(model, "time_limit", 120.0)
         set_optimizer_attribute(model, "output_flag", false)
     end
     optimize!(model)
@@ -152,6 +150,7 @@ end
 
 """
     refill_routes!(instance::Instance; 
+                        optimizer,
                         fixed_routes::Vector{Route}, 
                         fixed_routes_costs::Vector{Int}, 
                         verbose::Bool = false,
@@ -169,6 +168,7 @@ indicated by the boolean `refill_neighborhood`.
 """
 function refill_routes!(
     instance::Instance;
+    optimizer,
     fixed_routes::Vector{Route},
     fixed_routes_costs::Vector{Int},
     verbose::Bool=false,
@@ -190,6 +190,7 @@ function refill_routes!(
     # solve the MILP to refill the fixed routes with initial forced values to send
     fgs_commodities, model = fill_fixed_routes_MILP(
         instance;
+        optimizer,
         fixed_routes=fixed_routes,
         fixed_routes_costs=fixed_routes_costs,
         integer=true,
@@ -204,6 +205,7 @@ function refill_routes!(
     # solve again with warm start using the former solution
     fgs_commodities, model = fill_fixed_routes_MILP(
         instance;
+        optimizer,
         fixed_routes=fixed_routes,
         fixed_routes_costs=fixed_routes_costs,
         integer=true,
@@ -232,7 +234,8 @@ function refill_routes!(
 end
 
 """
-    refill_routes_from_depot!(instance::Instance; 
+    refill_routes_from_depot!(instance::Instance;
+                                optimizer, 
                                 depot_index::Int, 
                                 verbose::Bool = false, 
                                 stats::Union{Dict, Nothing} = nothing
@@ -244,6 +247,7 @@ In this case we use [`refill_routes!`](@ref) as a large neighborhood.
 """
 function refill_routes_from_depot!(
     instance::Instance;
+    optimizer,
     depot_index::Int,
     verbose::Bool=false,
     stats::Union{Dict,Nothing}=nothing,
@@ -254,6 +258,7 @@ function refill_routes_from_depot!(
     # Apply the refill_route framework
     return refill_routes!(
         instance;
+        optimizer,
         fixed_routes=fixed_routes,
         fixed_routes_costs=fixed_routes_costs,
         verbose=verbose,
@@ -317,7 +322,8 @@ function refill_every_route!(instance::Instance; verbose::Bool=false)
 end
 
 """
-    refill_iterative_depot!(instance::Instance; 
+    refill_iterative_depot!(instance::Instance;
+                            optimizer,
                             verbose::Bool = false, 
                             stats::Union{Dict, Nothing} = nothing
     )
@@ -328,11 +334,11 @@ Contrary to [`refill_every_route!`](@ref), this iterative way of
 refilling every route of a solution can be used on large instances.
 """
 function refill_iterative_depot!(
-    instance::Instance; verbose::Bool=false, stats::Union{Dict,Nothing}=nothing
+    instance::Instance; optimizer, verbose::Bool=false, stats::Union{Dict,Nothing}=nothing
 )
     @showprogress "Refill the routes starting at each depot" for d in 1:(instance.D)
         stats["duration_refill_routes"] += @elapsed refill_routes_from_depot!(
-            instance; depot_index=d, verbose=verbose, stats=stats
+            instance; optimizer, depot_index=d, verbose=verbose, stats=stats
         )
         if compute_total_time(stats) > stats["time_limit"]
             return nothing

@@ -350,11 +350,9 @@ function customer_insertion_flow(
     elseif optimizer === HiGHS.Optimizer
         if use_warm_start
             set_optimizer_attribute(model, "mip_rel_gap", 0.005)
-            set_optimizer_attribute(model, "time_limit", 20)
+            set_optimizer_attribute(model, "time_limit", 20.0)
         end
         set_optimizer_attribute(model, "output_flag", false)
-        set_optimizer_attribute(model, "solver", "simplex")
-        set_optimizer_attribute(model, "simplex_strategy", 1)
     end
     optimize!(model)
 
@@ -545,6 +543,7 @@ function one_step_ruin_recreate_customer!(
     println("Solve the initialization flow problem for $nb_m commodities")
     _, fgs_commodities, model, indices_m, old_possible_routes = customer_insertion_flow(
         instance;
+        optimizer,
         customer_index=customer_index,
         old_possible_routes=old_possible_routes,
         costs=costs,
@@ -564,6 +563,7 @@ function one_step_ruin_recreate_customer!(
     println("Solve the insertion flow problem for $nb_m commodities")
     _, fgs_commodities, model, indices_m, old_possible_routes = customer_insertion_flow(
         instance;
+        optimizer,
         customer_index=customer_index,
         old_possible_routes=old_possible_routes,
         costs=costs,
