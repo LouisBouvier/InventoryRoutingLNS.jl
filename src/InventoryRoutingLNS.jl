@@ -3,18 +3,22 @@ module InventoryRoutingLNS
 using Combinatorics
 using Clp
 using CSV
+using DataDeps
 using DataFrames
 using Distributed
+using Graphs
 using Gurobi
+using GZip
+using HiGHS
 using IterTools
 using JSON
 using JuMP
-using Graphs
 using LinearAlgebra
 using Plots
 using ProgressMeter
 using Random
 using SparseArrays
+using Tar
 
 using DataStructures: OrderedDict
 
@@ -63,9 +67,60 @@ include("analysis/analyze_solutions.jl")
 include("analysis/analyze_instances.jl")
 
 ## Matheuristic
+export decompress_dataset
 export read_instance_CSV, read_solution
 export paper_matheuristic!, route_based_matheuristic!
 export modified_capa_initialization_plus_ls!, multi_depot_local_search!
 export analyze_solution, analyze_instance
+
+# Data dependencies
+function __init__()
+    DataDeps.register(
+        DataDep(
+            "IRP-instances",
+            """
+            This dataset of inventory routing instances is a fruit of our partnership 
+            between Renault Group and the CERMICS laboratory at Ecole des Ponts. 
+            Those instances are continent-scale with hundreds of customers, 21 days horizon, 
+            and 15 depots on average. Routes can last several days (continuous-time), 
+            and 30 types of commodities are involved, leading to bin packing problems 
+            when filling trucks. In our paper "Solving a Continent-Scale Inventory Routing
+            Problem at Renault" we introduce a new large neighborhood search to solve 
+            those instances. We hope that sharing them publicly will motivate research on 
+            real-world and large-scale inventory routing. Environmental and economical 
+            impacts at stake are substantial.
+            To cite this dataset: 10.5281/zenodo.8177237.
+            Louis Bouvier, Guillaume Dalle, Axel Parmentier, Thibaut Vidal.
+            """,
+            "https://zenodo.org/record/8177237/files/instances.tar.gz?download=1";
+            post_fetch_method=(file -> decompress_dataset(file, "instances")),
+        ),
+    )
+    DataDeps.register(
+        DataDep(
+            "IRP-solutions",
+            """
+            This dataset of inventory routing solutions is a fruit of our partnership
+            between Renault Group and the CERMICS laboratory at Ecole des Ponts. 
+            The related instances (also publicly available) are continent-scale with 
+            hundreds of customers, 21 days horizon, and 15 depots on average. 
+            Routes can last several days (continuous-time), and 30 types of commodities
+            are involved, leading to bin packing problems when filling trucks. 
+            In our paper "Solving a Continent-Scale Inventory Routing Problem at Renault"
+            we introduce a new large neighborhood search to solve those instances. 
+            This dataset contains the solutions provided both by our algorithm and 
+            by a benchmark we implement, as shown in the computational experiments section
+            of our paper. We hope that sharing them publicly will motivate research 
+            on real-world and large-scale inventory routing. Environmental and economical
+            impacts at stake are substantial.
+            To cite this dataset: 10.5281/zenodo.8177271.
+            Louis Bouvier, Guillaume Dalle, Axel Parmentier, Thibaut Vidal.
+            """,
+            "https://zenodo.org/record/8177271/files/solutions.tar.gz?download=1";
+            post_fetch_method=(file -> decompress_dataset(file, "solutions")),
+        ),
+    )
+    return nothing
+end
 
 end

@@ -138,6 +138,7 @@ end
 
 """
     iterative_ruin_recreate_customer!(instance::Instance;
+                                        optimizer,
                                         niter::Int,
                                         verbose::Bool = false,
                                         at_random::Bool = false,
@@ -149,6 +150,7 @@ Two possibilities: select customers at random, or by decreasing cost order.
 """
 function iterative_ruin_recreate_customer!(
     instance::Instance;
+    optimizer,
     niter::Int,
     verbose::Bool=false,
     at_random::Bool=false,
@@ -161,12 +163,12 @@ function iterative_ruin_recreate_customer!(
         expensive_c = get_most_expensive_customers(instance)[end]
         recreated_cs = [expensive_c]
         stats["duration_customer_reinsertion"] += @elapsed one_step_ruin_recreate_customer!(
-            instance, expensive_c
+            instance, expensive_c; optimizer
         )
     else
         order = shuffle(collect(1:C))
         stats["duration_customer_reinsertion"] += @elapsed one_step_ruin_recreate_customer!(
-            instance, order[1]
+            instance, order[1]; optimizer
         )
     end
     newcost = compute_cost(instance)
@@ -185,11 +187,11 @@ function iterative_ruin_recreate_customer!(
             expensive_c = expensive_cs[index]
             append!(recreated_cs, expensive_c)
             stats["duration_customer_reinsertion"] += @elapsed one_step_ruin_recreate_customer!(
-                instance, expensive_c
+                instance, expensive_c; optimizer
             )
         else
             stats["duration_customer_reinsertion"] += @elapsed one_step_ruin_recreate_customer!(
-                instance, order[i + 1]
+                instance, order[i + 1]; optimizer
             )
         end
         newcost = compute_cost(instance)
@@ -203,6 +205,7 @@ end
 
 """
     iterative_ruin_recreate_commodity!(instance::Instance;
+                                        optimizer,
                                         niter::Int,
                                         verbose::Bool = false,
                                         stats::Union{Nothing, Dict} = nothing,
@@ -215,6 +218,7 @@ Two possibilities: select commodities at random, or by decreasing size.
 """
 function iterative_ruin_recreate_commodity!(
     instance::Instance;
+    optimizer,
     niter::Int,
     verbose::Bool=false,
     stats::Union{Nothing,Dict}=nothing,
@@ -233,6 +237,7 @@ function iterative_ruin_recreate_commodity!(
         oldcost = compute_cost(instance; ms=[commodity_index])
         stats["duration_commodity_reinsertion"] += @elapsed applied = one_step_ruin_recreate_commodity!(
             instance;
+            optimizer,
             commodity_index=commodity_index,
             integer=true,
             maxdist=Inf,
@@ -255,6 +260,7 @@ end
 ## ajouter sauvegarde de la meilleure solution courante
 """
     LNS!(instance::Instance;
+            optimizer,
             tol::Real = 0.01,
             n_it_commodity_reinsertion::Int,
             n_it_customer_reinsertion::Int,
@@ -276,6 +282,7 @@ the time limit written in `stats` dictionnary.
 """
 function LNS!(
     instance::Instance;
+    optimizer,
     tol::Real=0.01,
     n_it_commodity_reinsertion::Int,
     n_it_customer_reinsertion::Int,
@@ -289,6 +296,7 @@ function LNS!(
     # customer reinsertion steps
     iterative_ruin_recreate_customer!(
         instance;
+        optimizer,
         niter=n_it_customer_reinsertion,
         verbose=verbose,
         at_random=true,
@@ -301,7 +309,7 @@ function LNS!(
     end
     # commodity reinsertion steps
     iterative_ruin_recreate_commodity!(
-        instance; niter=n_it_commodity_reinsertion, verbose=verbose, stats=stats
+        instance; optimizer, niter=n_it_commodity_reinsertion, verbose=verbose, stats=stats
     )
     cost_altered = compute_cost(instance)
     if cost_altered < best_cost
@@ -318,7 +326,7 @@ function LNS!(
         best_solution = deepcopy(instance.solution)
     end
     # refill routes
-    refill_iterative_depot!(instance; verbose=verbose, stats=stats)
+    refill_iterative_depot!(instance; optimizer, verbose=verbose, stats=stats)
     cost_altered = compute_cost(instance)
     if cost_altered < best_cost
         best_cost = cost_altered
@@ -331,6 +339,7 @@ function LNS!(
         # customer reinsertion steps
         iterative_ruin_recreate_customer!(
             instance;
+            optimizer,
             niter=n_it_customer_reinsertion,
             verbose=verbose,
             at_random=true,
@@ -346,7 +355,11 @@ function LNS!(
         end
         # commodity reinsertion steps
         iterative_ruin_recreate_commodity!(
-            instance; niter=n_it_commodity_reinsertion, verbose=verbose, stats=stats
+            instance;
+            optimizer,
+            niter=n_it_commodity_reinsertion,
+            verbose=verbose,
+            stats=stats,
         )
         cost_altered = compute_cost(instance)
         if cost_altered < best_cost
@@ -369,7 +382,7 @@ function LNS!(
             break
         end
         # refill routes
-        refill_iterative_depot!(instance; verbose=verbose, stats=stats)
+        refill_iterative_depot!(instance; optimizer, verbose=verbose, stats=stats)
         cost_altered = compute_cost(instance)
         if cost_altered < best_cost
             best_cost = cost_altered

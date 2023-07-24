@@ -1,10 +1,11 @@
 """
     paper_matheuristic!(instance::Instance;
-                    n_it_commodity_reinsertion::Int,
-                    n_it_customer_reinsertion::Int, 
-                    tol::Float64 = 0.01,
-                    time_limit::Float64 = 90.0,
-                    verbose::Bool = false,
+        n_it_commodity_reinsertion::Int,
+        n_it_customer_reinsertion::Int, 
+        tol::Float64 = 0.01,
+        time_limit::Float64 = 90.0,
+        verbose::Bool = false,
+        optimizer=HiGHS.Optimizer,
     )
 
 Solve the instance `instance` with a matheuristic;
@@ -24,11 +25,12 @@ function paper_matheuristic!(
     tol::Float64=0.01,
     time_limit::Float64=90.0,
     verbose::Bool=false,
+    optimizer=HiGHS.Optimizer,
 )
     # create dict for logs
     stats = Dict()
     stats["tol_LNS"] = tol
-    stats["time_limit"] = time_limit
+    stats["time_limit"] = time_limit  # TODO: never used?
     stats["n_iter_commodity_reinsertion"] = n_it_commodity_reinsertion
     stats["n_it_customer_reinsertion"] = n_it_customer_reinsertion
     stats["nb_iter_LNS"] = 0
@@ -89,13 +91,14 @@ function paper_matheuristic!(
     # start solving
     # initialization plus local search
     stats["duration_init_plus_ls"] = @elapsed modified_capa_initialization_plus_ls!(
-        instance, verbose=verbose, stats=stats
+        instance; optimizer, verbose=verbose, stats=stats
     )
     cost_after_init_ls, details_init_ls = compute_detailed_cost(instance)
     @assert feasibility(instance, verbose=verbose)
     # large neighborhood search
     LNS!(
         instance;
+        optimizer,
         tol=tol,
         n_it_commodity_reinsertion=n_it_commodity_reinsertion,
         n_it_customer_reinsertion=n_it_customer_reinsertion,
@@ -105,7 +108,7 @@ function paper_matheuristic!(
     @assert feasibility(instance, verbose=verbose)
     cost_after_lns, details_lns = compute_detailed_cost(instance)
     # compute a lower bound
-    lb = lower_bound(instance)
+    lb = lower_bound(instance; optimizer)
     stats["lb"] = lb
     # print results
     verbose && println("\n")

@@ -18,4 +18,10 @@ DocMeta.setdocmeta!(
     @testset "Doctests" begin
         doctest(InventoryRoutingLNS)
     end
+    @testset verbose = true "Read & solve" begin
+        include("run_example.jl")
+    end
+    @testset verbose = true "Read & plot instances and solutions" begin
+        include("plot_instances_solutions.jl")
+    end
 end

@@ -216,6 +216,7 @@ end
 
 """
     customer_insertion_flow(instance::Instance;
+                            optimizer,
                             customer_index::Int,
                             old_possible_routes::Vector{Route},
                             costs::Vector,
@@ -240,6 +241,7 @@ to `values_commodities_flows` and `values_vehicles_flow`.
 """
 function customer_insertion_flow(
     instance::Instance;
+    optimizer,
     customer_index::Int,
     old_possible_routes::Vector{Route},
     costs::Vector,
@@ -253,7 +255,7 @@ function customer_insertion_flow(
     values_commodities_flows::Array,
 )
     M = instance.M
-    model = Model(Gurobi.Optimizer)
+    model = Model(optimizer)
 
     ## Vehicles flow
     fg_vehicles = expanded_vehicle_flow_graph_customer(
@@ -338,12 +340,20 @@ function customer_insertion_flow(
     #     format = MOI.FileFormats.FORMAT_LP
     # )
     # set_optimizer_attribute(model, "ratioGap", 0.03)
-    if use_warm_start
-        set_optimizer_attribute(model, "MIPGap", 0.005)
-        set_optimizer_attribute(model, "TimeLimit", 20)
+    if optimizer === Gurobi.Optimizer
+        if use_warm_start
+            set_optimizer_attribute(model, "MIPGap", 0.005)
+            set_optimizer_attribute(model, "TimeLimit", 20)
+        end
+        set_optimizer_attribute(model, "OutputFlag", 0)
+        set_optimizer_attribute(model, "Method", 1)
+    elseif optimizer === HiGHS.Optimizer
+        if use_warm_start
+            set_optimizer_attribute(model, "mip_rel_gap", 0.005)
+            set_optimizer_attribute(model, "time_limit", 20.0)
+        end
+        set_optimizer_attribute(model, "output_flag", false)
     end
-    set_optimizer_attribute(model, "OutputFlag", 0)
-    set_optimizer_attribute(model, "Method", 1)
     optimize!(model)
 
     # stat = termination_status(model)
@@ -492,7 +502,7 @@ function fill_new_routes_customer_insertion!(
 end
 
 """
-    one_step_ruin_recreate_customer!(instance::Instance, customer_index::Int)
+    one_step_ruin_recreate_customer!(instance::Instance, customer_index::Int; optimizer)
 
 Remove and insert the customer indexed by `customer_index` in the current solution.
 
@@ -502,7 +512,9 @@ MILP with [`customer_insertion_flow`](@ref), then fill former and new routes wit
 [`fill_former_routes_customer_insertion!`](@ref) and [`fill_new_routes_customer_insertion!`](@ref) respectively. 
 A warmstart is performed to gain speed, initialized at the last solution.
 """
-function one_step_ruin_recreate_customer!(instance::Instance, customer_index::Int)
+function one_step_ruin_recreate_customer!(
+    instance::Instance, customer_index::Int; optimizer
+)
     ## Save the former solution and cost 
     intial_solution = deepcopy(instance.solution)
     initial_cost = compute_cost(instance)
@@ -531,6 +543,7 @@ function one_step_ruin_recreate_customer!(instance::Instance, customer_index::In
     println("Solve the initialization flow problem for $nb_m commodities")
     _, fgs_commodities, model, indices_m, old_possible_routes = customer_insertion_flow(
         instance;
+        optimizer,
         customer_index=customer_index,
         old_possible_routes=old_possible_routes,
         costs=costs,
@@ -550,6 +563,7 @@ function one_step_ruin_recreate_customer!(instance::Instance, customer_index::In
     println("Solve the insertion flow problem for $nb_m commodities")
     _, fgs_commodities, model, indices_m, old_possible_routes = customer_insertion_flow(
         instance;
+        optimizer,
         customer_index=customer_index,
         old_possible_routes=old_possible_routes,
         costs=costs,
