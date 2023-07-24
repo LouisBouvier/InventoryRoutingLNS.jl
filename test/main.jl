@@ -7,7 +7,6 @@ Random.seed!(60)
 folder_path = joinpath(datadep"IRP-instances", "instances", "instances")
 list_of_instances = readdir(folder_path)
 
-
 for instance_id in list_of_instances
     println("Solving instance $instance_id")
     instance = read_instance_CSV(joinpath(folder_path, instance_id))
@@ -18,6 +17,6 @@ for instance_id in list_of_instances
         tol=-0.01,
         time_limit=90.0,
         verbose=true,
-        optimizer = Gurobi.Optimizer
+        optimizer=Gurobi.Optimizer,
     )
 end
