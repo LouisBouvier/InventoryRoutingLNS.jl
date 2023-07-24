@@ -1,6 +1,6 @@
 name = "InventoryRoutingLNS"
 uuid = "9bd57249-2adc-458a-9ed8-13930b6156fb"
-authors = ["Louis Bouvier", "Guillaume Dalle", "Axel Parmentier", "Thibaut Vidal"]
+authors = ["Louis Bouvier", "Guillaume Dalle"]
 version = "0.1.0"
 
 [deps]

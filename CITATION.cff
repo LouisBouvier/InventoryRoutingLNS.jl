@@ -1,0 +1,29 @@
+# This CITATION.cff file was generated with cffinit.
+# Visit https://bit.ly/cffinit to generate yours today!
+
+cff-version: 1.2.0
+title: InventoryRoutingLNS.jl
+message: >-
+  If you use this software, please cite it using the
+  metadata from this file.
+type: software
+authors:
+  - given-names: Louis
+    family-names: Bouvier
+    orcid: 'https://orcid.org/0000-0001-6982-2043'
+  - given-names: Guillaume
+    family-names: Dalle
+    orcid: 'https://orcid.org/0000-0003-4866-1687'
+identifiers:
+  - type: doi
+    value: 10.5281/zenodo.8178634
+    description: Zenodo
+repository-code: 'https://github.com/LouisBouvier/InventoryRoutingLNS.jl'
+abstract: >-
+  Large Neighborhood Search for solving large-scale
+  multi-attribute Inventory Routing Problems.
+keywords:
+  - Multi-attribute Inventory Routing problem
+  - Large Neighborhood Search
+  - Mathematical Programming
+license: MIT
