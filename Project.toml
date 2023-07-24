@@ -1,7 +1,7 @@
 name = "InventoryRoutingLNS"
 uuid = "9bd57249-2adc-458a-9ed8-13930b6156fb"
 authors = ["Louis Bouvier", "Guillaume Dalle", "Axel Parmentier", "Thibaut Vidal"]
-version = "0.1.0"
+version = "0.1.1"
 
 [deps]
 CSV = "336ed68f-0bac-5ca0-87d4-7b16caf5d00b"
