@@ -79,9 +79,20 @@ function __init__()
         DataDep(
             "IRP-instances",
             """
-            TODO: description, authors, citation, copyright, etc.
+            This dataset of inventory routing instances is a fruit of our partnership 
+            between Renault Group and the CERMICS laboratory at Ecole des Ponts. 
+            Those instances are continent-scale with hundreds of customers, 21 days horizon, 
+            and 15 depots on average. Routes can last several days (continuous-time), 
+            and 30 types of commodities are involved, leading to bin packing problems 
+            when filling trucks. In our paper "Solving a Continent-Scale Inventory Routing
+            Problem at Renault" we introduce a new large neighborhood search to solve 
+            those instances. We hope that sharing them publicly will motivate research on 
+            real-world and large-scale inventory routing. Environmental and economical 
+            impacts at stake are substantial.
+            To cite this dataset: 10.5281/zenodo.8177237.
+            Louis Bouvier, Guillaume Dalle, Axel Parmentier, Thibaut Vidal.
             """,
-            "http://cermics.enpc.fr/~bouvierl/IRP/data/instances.tar.gz";
+            "https://zenodo.org/record/8177237/files/instances.tar.gz?download=1";
             post_fetch_method=(file -> decompress_dataset(file, "instances")),
         ),
     )
@@ -89,9 +100,23 @@ function __init__()
         DataDep(
             "IRP-solutions",
             """
-            TODO: description, authors, citation, copyright, etc.
+            This dataset of inventory routing solutions is a fruit of our partnership
+            between Renault Group and the CERMICS laboratory at Ecole des Ponts. 
+            The related instances (also publicly available) are continent-scale with 
+            hundreds of customers, 21 days horizon, and 15 depots on average. 
+            Routes can last several days (continuous-time), and 30 types of commodities
+            are involved, leading to bin packing problems when filling trucks. 
+            In our paper "Solving a Continent-Scale Inventory Routing Problem at Renault"
+            we introduce a new large neighborhood search to solve those instances. 
+            This dataset contains the solutions provided both by our algorithm and 
+            by a benchmark we implement, as shown in the computational experiments section
+            of our paper. We hope that sharing them publicly will motivate research 
+            on real-world and large-scale inventory routing. Environmental and economical
+            impacts at stake are substantial.
+            To cite this dataset: 10.5281/zenodo.8177271.
+            Louis Bouvier, Guillaume Dalle, Axel Parmentier, Thibaut Vidal.
             """,
-            "http://cermics.enpc.fr/~bouvierl/IRP/data/solutions.tar.gz";
+            "https://zenodo.org/record/8177271/files/solutions.tar.gz?download=1";
             post_fetch_method=(file -> decompress_dataset(file, "solutions")),
         ),
     )
